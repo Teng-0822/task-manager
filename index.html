@@ -29,7 +29,7 @@
       --primary: #6366f1; --primary-light: #312e81;
     }
     .app {
-      width: 100%; max-width: 1200px; background: var(--surface);
+      width: 100%; max-width: 1400px; background: var(--surface);
       border-radius: var(--radius); box-shadow: var(--shadow-md); overflow: hidden;
       border: 1px solid var(--border);
     }
@@ -73,7 +73,7 @@
     }
     .today-title { font-weight: 600; margin-bottom: 14px; color: var(--text); font-size: 15px; }
 
-    .filter-bar { display: flex; gap: 12px; align-items: center; margin-bottom: 20px; }
+    .filter-bar { display: flex; gap: 12px; align-items: center; margin-bottom: 20px; flex-wrap: wrap; }
     .filter-bar select { padding: 6px 12px; border: 1px solid var(--border); border-radius: 8px; font-size: 13px; background: var(--surface); color: var(--text); }
     .button-row { display: flex; gap: 8px; margin-left: auto; }
 
@@ -91,8 +91,8 @@
     .employee-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 4px; }
 
     /* Scrollable containers */
-    #today-tasks, #priority-today, #upcoming-events { max-height: 220px; overflow-y: auto; }
-    #dashboard-clients { max-height: calc(100vh - 280px); overflow-y: auto; }
+    #today-tasks, #priority-today, #upcoming-events { max-height: 240px; overflow-y: auto; }
+    #dashboard-clients { max-height: calc(100vh - 260px); overflow-y: auto; }
 
     .client-tasks-grid { display: flex; flex-direction: column; gap: 16px; }
     .client-card {
@@ -112,9 +112,9 @@
       font-size: 13px; color: var(--text);
     }
 
-    .dashboard-layout { display: flex; gap: 24px; }
+    .dashboard-layout { display: flex; gap: 24px; flex-wrap: wrap; }
     .left-panel { width: 340px; flex-shrink: 0; display: flex; flex-direction: column; gap: 16px; }
-    .right-panel { flex: 1; }
+    .right-panel { flex: 1; min-width: 0; }
 
     /* Calendar */
     .calendar-wrapper { background: var(--surface); border-radius: var(--radius); padding: 20px; box-shadow: var(--shadow-sm); border: 1px solid var(--border); }
@@ -181,7 +181,7 @@
     .prompt-link-actions button:hover { background: var(--bg); color: var(--text); }
     .prompt-actions { display: flex; gap: 8px; margin-top: 12px; }
 
-    .settings-tabs { display: flex; gap: 12px; margin-bottom: 20px; border-bottom: 1px solid var(--border); padding-bottom: 12px; }
+    .settings-tabs { display: flex; gap: 12px; margin-bottom: 20px; border-bottom: 1px solid var(--border); padding-bottom: 12px; flex-wrap: wrap; }
     .settings-tab-btn { background: none; border: none; font-weight: 500; color: var(--text-secondary); padding: 8px 16px; border-radius: 8px; cursor: pointer; }
     .settings-tab-btn.active { background: var(--primary); color: white; }
     .employee-item { display: flex; align-items: center; gap: 10px; padding: 10px; background: var(--bg); border-radius: 8px; margin-bottom: 8px; }
@@ -189,10 +189,11 @@
     .task-controls { display: flex; align-items: center; gap: 4px; margin-left: auto; }
     .task-controls input[type="checkbox"] { margin: 0; vertical-align: middle; width: auto; }
 
-    @media (max-width: 800px) {
+    @media (max-width: 900px) {
       .dashboard-layout { flex-direction: column; }
       .left-panel { width: 100%; }
-      .filter-bar { flex-wrap: wrap; }
+      .filter-bar { flex-direction: column; align-items: flex-start; }
+      .button-row { margin-left: 0; margin-top: 8px; }
     }
   </style>
 </head>
