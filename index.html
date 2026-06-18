@@ -23,6 +23,27 @@
       background: var(--bg); display: flex; justify-content: center; padding: 20px;
       min-height: 100vh; transition: background var(--transition);
     }
+    /* Purple theme */
+    body.theme-purple {
+      --primary: #8b5cf6;
+      --primary-light: #f5f3ff;
+      --bg: #faf5ff;
+      --surface: #ffffff;
+      --border: #e9d5ff;
+      --text: #1e293b;
+      --text-secondary: #6b7280;
+    }
+    /* Green theme */
+    body.theme-green {
+      --primary: #10b981;
+      --primary-light: #d1fae5;
+      --bg: #f0fdf4;
+      --surface: #ffffff;
+      --border: #a7f3d0;
+      --text: #1e293b;
+      --text-secondary: #6b7280;
+    }
+    /* Dark theme */
     body.theme-dark {
       --bg: #0f172a; --surface: #1e293b; --border: #334155;
       --text: #f1f5f9; --text-secondary: #cbd5e1;
@@ -264,7 +285,9 @@
   </div>
 </div>
 
-<!-- Modals -->
+<!-- Modals (identical to previous, except added missing event listener for theme) -->
+<!-- All modals remain the same as your last version. I've included them fully below for completeness. -->
+
 <div class="modal" id="task-modal"><div class="modal-content"><h2>Add Task</h2><div class="form-group"><label>Client</label><select id="task-client"></select></div><div class="form-group"><label>Type</label><select id="task-type"><option value="daily">Daily</option><option value="weekly">Weekly</option><option value="monthly">Monthly</option></select></div><div class="form-group"><label>Task Description</label><input type="text" id="task-text" placeholder="e.g., Check emails"></div><div class="form-group"><label>Assign Employee (optional)</label><select id="task-employee"><option value="">-- None --</option></select></div><button id="save-task">Add</button><button class="secondary" id="close-task-modal">Cancel</button></div></div>
 <div class="modal" id="edit-task-modal"><div class="modal-content"><h2>Edit Task</h2><input type="hidden" id="edit-task-id"><div class="form-group"><label>Client</label><select id="edit-task-client"></select></div><div class="form-group"><label>Type</label><select id="edit-task-type"><option value="daily">Daily</option><option value="weekly">Weekly</option><option value="monthly">Monthly</option></select></div><div class="form-group"><label>Task Description</label><input type="text" id="edit-task-text"></div><div class="form-group"><label>Assign Employee</label><select id="edit-task-employee"><option value="">-- None --</option></select></div><button id="save-edit-task">Save Changes</button><button class="secondary" id="close-edit-task-modal">Cancel</button></div></div>
 <div class="modal" id="prio-modal"><div class="modal-content"><h2 id="prio-modal-title">Add Priority Task</h2><input type="hidden" id="prio-edit-id"><div class="form-group"><label>Client</label><select id="prio-client"></select></div><div class="form-group"><label>Description</label><input type="text" id="prio-text" placeholder="Task description"></div><div class="form-group"><label>Urgency</label><select id="prio-urgency"><option value="normal">Normal</option><option value="important">Important</option><option value="critical">Critical</option><option value="urgent">Urgent</option></select></div><div class="form-group"><label>Due Date</label><input type="date" id="prio-date"></div><div class="form-group"><label>Assign Employee (optional)</label><select id="prio-employee"><option value="">-- None --</option></select></div><button id="save-prio">Save</button><button class="secondary" id="close-prio-modal">Cancel</button></div></div>
@@ -346,7 +369,23 @@
     function getMonday(d) { const dt=new Date(d); const day=dt.getDay(); const diff=dt.getDate()-day+(day===0?-6:1); dt.setDate(diff); return dt.toISOString().split('T')[0]; }
     function getFirstOfMonth(d) { const dt=new Date(d); return `${dt.getFullYear()}-${String(dt.getMonth()+1).padStart(2,'0')}-01`; }
 
-    function applyTheme(t) { document.body.className = t==='dark'?'theme-dark':''; document.getElementById('theme-select').value = t; }
+    // --- THEME LOGIC (FIXED) ---
+    function applyTheme(t) {
+      // remove all theme classes
+      document.body.classList.remove('theme-dark', 'theme-purple', 'theme-green');
+      if (t === 'dark') document.body.classList.add('theme-dark');
+      else if (t === 'purple') document.body.classList.add('theme-purple');
+      else if (t === 'green') document.body.classList.add('theme-green');
+      // blue = default (no class)
+      document.getElementById('theme-select').value = t;
+    }
+    // Theme change listener (now saves to sheet)
+    document.getElementById('theme-select').addEventListener('change', function() {
+      data.theme = this.value;
+      saveData();
+      applyTheme(data.theme);
+    });
+
     function resetTasks() {
       const today = getTodayDateStr(), mon = getMonday(new Date()), monthFirst = getFirstOfMonth(new Date());
       let ch = false;
@@ -584,7 +623,7 @@
     document.getElementById('close-prio-modal').addEventListener('click',()=>document.getElementById('prio-modal').classList.remove('active'));
     document.getElementById('close-event-modal').addEventListener('click',()=>document.getElementById('event-modal').classList.remove('active'));
 
-    // --- Clients ---
+    // --- Clients (unchanged) ---
     function renderClients() { const cont=document.getElementById('clients-list'); if(!data.clients.length){ cont.innerHTML='<p>No clients yet.</p>'; return; } cont.innerHTML = data.clients.map(c=>{ const accent=c.colors?.[0]||'#3b82f6'; const loc=c.location||''; const timeHtml=loc?`<span class="client-time" data-timezone="${loc}">(loading)</span>`:''; return `<div class="client-card-v2"><div class="card-header" style="background:linear-gradient(135deg,${accent},${adjustColor(accent,-20)});"><span>${c.name}</span><span style="font-size:14px;font-weight:400;">🕒 ${to12h(c.workStart)} - ${to12h(c.workEnd)}</span></div><div class="card-body">${loc?`<div class="location-time">📍 ${tzLabel(loc)} : ${timeHtml}</div>`:''}<div style="display:flex;align-items:center;gap:8px;margin:12px 0;"><span style="font-weight:600;color:var(--text);font-size:13px;">Color Palette:</span><div style="display:flex;gap:6px;">${c.colors.map(cl=>`<span class="color-dot" style="background:${cl};" title="${cl}"></span>`).join('')}</div></div><div style="display:flex;align-items:center;gap:8px;margin-top:8px;"><span style="font-weight:600;color:var(--text);font-size:13px;">Text Font:</span><div style="display:flex;gap:6px;">${c.fonts.map(f=>`<span class="font-tag">${f}</span>`).join('')||'<span style="color:var(--text-secondary);">None</span>'}</div></div><div class="card-actions" style="margin-top:16px;display:flex;gap:8px;"><button class="secondary compact-btn edit-client-btn" data-client-id="${c.id}">✎ Edit</button><button class="secondary compact-btn delete-client-btn" data-client-id="${c.id}">✕ Delete</button></div></div></div>`; }).join(''); cont.querySelectorAll('.delete-client-btn').forEach(b=>b.addEventListener('click',()=>{ const id=b.dataset.clientId; showConfirm('Delete this client and all its data?',()=>{ data.clients=data.clients.filter(c=>c.id!=id); data.tasks=data.tasks.filter(t=>t.clientId!=id); data.prompts=data.prompts.filter(p=>p.clientId!=id); saveData(); renderClients(); renderDashboard(); renderPromptTab(); updateClientTimes(); }); })); cont.querySelectorAll('.edit-client-btn').forEach(b=>b.addEventListener('click',()=>{ const client=data.clients.find(c=>c.id==b.dataset.clientId); if(client) openClientModal(client); })); updateClientTimes(); }
     function adjustColor(hex,p){ const num=parseInt(hex.replace('#',''),16), amt=Math.round(2.55*p), R=Math.min(255,Math.max(0,(num>>16)+amt)), G=Math.min(255,Math.max(0,(num>>8&0xFF)+amt)), B=Math.min(255,Math.max(0,(num&0xFF)+amt)); return `#${(1<<24|R<<16|G<<8|B).toString(16).slice(1)}`; }
     let modalColors=[], modalFonts=[];
@@ -598,7 +637,7 @@
     document.getElementById('add-client-btn').addEventListener('click',()=>openClientModal());
     document.getElementById('close-client-modal').addEventListener('click',()=>document.getElementById('client-modal').classList.remove('active'));
 
-    // --- AI Prompts ---
+    // --- AI Prompts (unchanged) ---
     function renderPromptTab() { const cont=document.getElementById('prompts-clients-grid'); if(!data.clients.length){ cont.innerHTML='<p>No clients yet.</p>'; return; } cont.innerHTML=data.clients.map(c=>{ const accent=c.colors?.[0]||'#3b82f6'; const prompts=data.prompts.filter(p=>p.clientId===c.id&&p.type==='text'); return `<div class="prompt-client-card"><div class="prompt-header" style="background:linear-gradient(135deg,${accent},${adjustColor(accent,-20)});">${c.name}</div><div class="prompt-body">${prompts.length?'': '<p style="color:var(--text-secondary);font-size:13px;">No text prompts saved.</p>'}${prompts.map(p=>`<div class="prompt-link"><a href="${p.link}" target="_blank" class="prompt-link-text">📄 ${p.title}</a><div class="prompt-link-actions"><button class="edit-prompt-btn" data-id="${p.id}" title="Edit">✏️</button><button class="delete-prompt-btn" data-id="${p.id}" title="Delete">🗑️</button></div></div>`).join('')}<div class="prompt-actions"><button class="compact-btn add-text-prompt-btn" data-client-id="${c.id}">➕ Text Only</button><button class="compact-btn add-image-prompt-btn" data-client-id="${c.id}">🖼️ Image Generator</button></div></div></div>`; }).join(''); cont.querySelectorAll('.edit-prompt-btn').forEach(b=>b.addEventListener('click',e=>{ e.stopPropagation(); const p=data.prompts.find(p=>p.id==b.dataset.id); if(p) openEditPromptModal(p); })); cont.querySelectorAll('.delete-prompt-btn').forEach(b=>b.addEventListener('click',e=>{ e.stopPropagation(); showConfirm('Delete this prompt?',()=>{ data.prompts=data.prompts.filter(p=>p.id!=b.dataset.id); saveData(); renderPromptTab(); }); })); cont.querySelectorAll('.add-text-prompt-btn').forEach(b=>b.addEventListener('click',()=>openPromptModal(b.dataset.clientId,'text'))); cont.querySelectorAll('.add-image-prompt-btn').forEach(b=>b.addEventListener('click',()=>openPromptModal(b.dataset.clientId,'image'))); }
     function openPromptModal(clientId,type,prompt=null){ document.getElementById('edit-prompt-id').value=prompt?prompt.id:''; document.getElementById('prompt-client-id-hidden').value=clientId; if(prompt){ document.getElementById('prompt-modal-title').textContent='Edit Text Prompt'; document.getElementById('prompt-type-group').style.display='none'; document.getElementById('prompt-type').value='text'; document.getElementById('text-fields').style.display='block'; document.getElementById('image-fields').style.display='none'; document.getElementById('save-prompt-btn').textContent='Update'; document.getElementById('prompt-title').value=prompt.title; document.getElementById('prompt-link').value=prompt.link; } else { document.getElementById('prompt-modal-title').textContent='Add Prompt'; document.getElementById('prompt-type-group').style.display='block'; document.getElementById('prompt-type').value=type; document.getElementById('text-fields').style.display=type==='text'?'block':'none'; document.getElementById('image-fields').style.display=type==='image'?'block':'none'; document.getElementById('save-prompt-btn').textContent=type==='image'?'Generate':'Save'; document.getElementById('prompt-title').value=''; document.getElementById('prompt-link').value=''; document.getElementById('prompt-size').value=''; document.getElementById('prompt-topic').value=''; document.getElementById('prompt-caption').value=''; } document.getElementById('prompt-modal').classList.add('active'); }
     function openEditPromptModal(p){ openPromptModal(p.clientId,'text',p); }
@@ -651,10 +690,10 @@
       }
     });
 
-    // ---------- FIX: normalise missing lastReset before resetTasks ----------
+    // ---------- INIT (with theme fixed) ----------
     (async function init() {
       await loadData();
-      // ensure every daily/weekly/monthly task has a lastReset
+      // normalise missing lastReset
       const today = getTodayDateStr();
       data.tasks.forEach(task => {
         if ((task.type === 'daily' || task.type === 'weekly' || task.type === 'monthly') && !task.lastReset) {
