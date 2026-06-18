@@ -90,7 +90,6 @@
     .action-buttons { display: flex; align-items: center; gap: 8px; margin-left: auto; }
     .employee-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 4px; }
 
-    /* Scrollable containers */
     #today-tasks, #priority-today, #upcoming-events { max-height: 240px; overflow-y: auto; }
     #dashboard-clients { max-height: calc(100vh - 260px); overflow-y: auto; }
 
@@ -116,7 +115,6 @@
     .left-panel { width: 340px; flex-shrink: 0; display: flex; flex-direction: column; gap: 16px; }
     .right-panel { flex: 1; min-width: 0; }
 
-    /* Calendar */
     .calendar-wrapper { background: var(--surface); border-radius: var(--radius); padding: 20px; box-shadow: var(--shadow-sm); border: 1px solid var(--border); }
     .calendar-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
     .month-title { font-size: 20px; font-weight: 600; color: var(--text); }
@@ -134,7 +132,6 @@
     .day-details { background: var(--surface); border-radius: var(--radius); padding: 16px; margin-top: 16px; border: 1px solid var(--border); animation: slideDown 0.25s ease; }
     @keyframes slideDown { from { opacity: 0; transform: translateY(-8px); } to { opacity: 1; transform: translateY(0); } }
 
-    /* Modals */
     .modal {
       display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
       background: rgba(0,0,0,0.25); backdrop-filter: blur(4px); justify-content: center; align-items: center; z-index: 100;
@@ -272,7 +269,23 @@
 <div class="modal" id="edit-task-modal"><div class="modal-content"><h2>Edit Task</h2><input type="hidden" id="edit-task-id"><div class="form-group"><label>Client</label><select id="edit-task-client"></select></div><div class="form-group"><label>Type</label><select id="edit-task-type"><option value="daily">Daily</option><option value="weekly">Weekly</option><option value="monthly">Monthly</option></select></div><div class="form-group"><label>Task Description</label><input type="text" id="edit-task-text"></div><div class="form-group"><label>Assign Employee</label><select id="edit-task-employee"><option value="">-- None --</option></select></div><button id="save-edit-task">Save Changes</button><button class="secondary" id="close-edit-task-modal">Cancel</button></div></div>
 <div class="modal" id="prio-modal"><div class="modal-content"><h2 id="prio-modal-title">Add Priority Task</h2><input type="hidden" id="prio-edit-id"><div class="form-group"><label>Client</label><select id="prio-client"></select></div><div class="form-group"><label>Description</label><input type="text" id="prio-text" placeholder="Task description"></div><div class="form-group"><label>Urgency</label><select id="prio-urgency"><option value="normal">Normal</option><option value="important">Important</option><option value="critical">Critical</option><option value="urgent">Urgent</option></select></div><div class="form-group"><label>Due Date</label><input type="date" id="prio-date"></div><div class="form-group"><label>Assign Employee (optional)</label><select id="prio-employee"><option value="">-- None --</option></select></div><button id="save-prio">Save</button><button class="secondary" id="close-prio-modal">Cancel</button></div></div>
 <div class="modal" id="event-modal"><div class="modal-content"><h2 id="event-modal-title">Add Event</h2><input type="hidden" id="event-edit-id"><div class="form-group"><label>Client</label><select id="event-client"></select></div><div class="form-group"><label>Description</label><input type="text" id="event-text" placeholder="Event description"></div><div class="form-group"><label>Date</label><input type="date" id="event-date"></div><div class="form-group"><label>Time</label><input type="time" id="event-time"></div><div class="form-group"><label>Type</label><select id="event-type"><option value="meeting">Meeting</option><option value="interview">Interview</option><option value="other">Other</option></select></div><div class="form-group" id="event-custom-type-group" style="display:none;"><label>Custom Type</label><input type="text" id="event-custom-type" placeholder="e.g., Workshop"></div><div class="form-group"><label>Assign Employee (optional)</label><select id="event-employee"><option value="">-- None --</option></select></div><button id="save-event">Save</button><button class="secondary" id="close-event-modal">Cancel</button></div></div>
-<div class="modal" id="client-modal"><div class="modal-content"><h2 id="client-modal-title">Add Client</h2><input type="hidden" id="edit-client-id"><div class="form-group"><label>Client Name</label><input type="text" id="client-name"></div><div class="form-group"><label>Work Start Time</label><input type="time" id="client-start"></div><div class="form-group"><label>Work End Time</label><input type="time" id="client-end"></div><div class="form-group"><label>Location / Timezone</label><input type="text" id="client-location" placeholder="e.g., Asia/Manila" list="timezone-list"><datalist id="timezone-list"><option value="Asia/Manila">Philippines</option><option value="America/Los_Angeles">San Francisco</option><option value="America/New_York">New York</option><option value="America/Chicago">Chicago</option><option value="America/Denver">Denver</option><option value="Europe/London">London</option><option value="Europe/Paris">Paris</option><option value="Asia/Tokyo">Tokyo</option><option value="Asia/Dubai">Dubai</option><option value="Australia/Sydney">Sydney</option></datalist></div><div class="form-group"><label>Color Palette</label><div id="color-list" class="dynamic-list"></div><div class="hex-input-group"><input type="color" id="new-color-picker" value="#3b82f6"><input type="text" id="new-color-hex" placeholder="#3b82f6" maxlength="7" value="#3b82f6"><button id="add-color-btn" class="secondary compact-btn">Add Color</button></div></div><div class="form-group"><label>Fonts</label><div id="font-list" class="dynamic-list"></div><div style="display:flex; gap:8px; margin-top:5px;"><input type="text" id="new-font" placeholder="Font name (e.g., Open Sans)"><button id="add-font-btn" class="secondary compact-btn">Add Font</button></div></div><button id="save-client">Save</button><button class="secondary" id="close-client-modal">Cancel</button></div></div>
+<div class="modal" id="client-modal"><div class="modal-content"><h2 id="client-modal-title">Add Client</h2><input type="hidden" id="edit-client-id"><div class="form-group"><label>Client Name</label><input type="text" id="client-name"></div><div class="form-group"><label>Work Start Time</label><input type="time" id="client-start"></div><div class="form-group"><label>Work End Time</label><input type="time" id="client-end"></div><div class="form-group">
+      <label>Location / Timezone</label>
+      <input type="text" id="client-location" placeholder="e.g., Asia/Manila, Europe/London" list="timezone-list">
+      <datalist id="timezone-list">
+        <option value="Asia/Manila">Philippines</option>
+        <option value="America/Los_Angeles">San Francisco</option>
+        <option value="America/New_York">New York</option>
+        <option value="America/Chicago">Chicago</option>
+        <option value="America/Denver">Denver</option>
+        <option value="Europe/London">UK - London</option>
+        <option value="Europe/Paris">France - Paris</option>
+        <option value="Asia/Tokyo">Japan - Tokyo</option>
+        <option value="Asia/Dubai">UAE - Dubai</option>
+        <option value="Australia/Sydney">Australia - Sydney</option>
+      </datalist>
+      <small style="color:var(--text-secondary);">Enter a valid IANA timezone (e.g., Europe/Berlin)</small>
+    </div><div class="form-group"><label>Color Palette</label><div id="color-list" class="dynamic-list"></div><div class="hex-input-group"><input type="color" id="new-color-picker" value="#3b82f6"><input type="text" id="new-color-hex" placeholder="#3b82f6" maxlength="7" value="#3b82f6"><button id="add-color-btn" class="secondary compact-btn">Add Color</button></div></div><div class="form-group"><label>Fonts</label><div id="font-list" class="dynamic-list"></div><div style="display:flex; gap:8px; margin-top:5px;"><input type="text" id="new-font" placeholder="Font name (e.g., Open Sans)"><button id="add-font-btn" class="secondary compact-btn">Add Font</button></div></div><button id="save-client">Save</button><button class="secondary" id="close-client-modal">Cancel</button></div></div>
 <div class="modal" id="prompt-modal"><div class="modal-content"><h2 id="prompt-modal-title">Add Prompt</h2><input type="hidden" id="prompt-client-id-hidden"><input type="hidden" id="edit-prompt-id"><div class="form-group" id="prompt-type-group"><label>Type</label><select id="prompt-type"><option value="text">Text only</option><option value="image">Image generator</option></select></div><div id="text-fields"><div class="form-group"><label>Title</label><input type="text" id="prompt-title"></div><div class="form-group"><label>Link</label><input type="url" id="prompt-link"></div></div><div id="image-fields" style="display:none;"><div class="form-group"><label>Size</label><input type="text" id="prompt-size" placeholder="e.g., 1:1, 4:5"></div><div class="form-group"><label>Topic</label><textarea id="prompt-topic" rows="3"></textarea></div><div class="form-group"><label>Caption</label><textarea id="prompt-caption" rows="3"></textarea></div></div><button id="save-prompt-btn">Save</button><button class="secondary" id="close-prompt-modal">Cancel</button></div></div>
 <div class="modal" id="generate-modal"><div class="modal-content"><h2>Generated Prompt</h2><textarea class="prompt-output" id="generated-prompt" readonly></textarea><button id="copy-prompt">Copy to Clipboard</button><button class="secondary" id="close-generate-modal">Close</button></div></div>
 <div class="modal" id="settings-modal"><div class="modal-content" style="max-width:560px;"><h2>Settings</h2><div class="settings-tabs"><button class="settings-tab-btn active" data-setting="theme">Theme</button><button class="settings-tab-btn" data-setting="employees">Employees</button><button class="settings-tab-btn" data-setting="api">API</button></div><div id="theme-panel"><div class="form-group"><label>Select Theme</label><select id="theme-select"><option value="blue">Blue</option><option value="purple">Purple</option><option value="green">Green</option><option value="dark">Dark</option></select></div></div><div id="employees-panel" style="display:none;"><div id="employees-list"></div><button id="add-employee-btn" class="secondary" style="margin-top:12px;">+ Add Employee</button></div><div id="api-panel" style="display:none;"><div class="form-group"><label>Web App URL</label><input type="text" id="api-url" placeholder="https://script.google.com/macros/s/..."></div><button id="save-api-url" class="secondary">Save URL</button></div><button class="secondary" id="close-settings" style="margin-top:20px;">Close</button></div></div>
@@ -287,7 +300,6 @@
     let calDate = new Date();
     let selectedCalDate = null;
 
-    // API helpers
     function getApiUrl() { return localStorage.getItem('clientManagerApiUrl') || DEFAULT_API_URL; }
 
     async function loadData() {
@@ -297,10 +309,7 @@
         const text = await res.text();
         if (text) {
           data = JSON.parse(text);
-          // If a web app URL is stored in the sheet, use it
-          if (data.webAppUrl) {
-            localStorage.setItem('clientManagerApiUrl', data.webAppUrl);
-          }
+          if (data.webAppUrl) localStorage.setItem('clientManagerApiUrl', data.webAppUrl);
         } else {
           data = { clients: [], tasks: [], prompts: [], employees: [], theme: 'blue' };
         }
@@ -318,7 +327,7 @@
 
     async function saveData() {
       try {
-        data.webAppUrl = getApiUrl();   // always include the current URL
+        data.webAppUrl = getApiUrl();
         await fetch(getApiUrl() + '?action=save', { method: 'POST', body: JSON.stringify(data) });
       } catch (e) { console.error('Save failed', e); }
     }
@@ -338,8 +347,24 @@
     function getFirstOfMonth(d) { const dt=new Date(d); return `${dt.getFullYear()}-${String(dt.getMonth()+1).padStart(2,'0')}-01`; }
 
     function applyTheme(t) { document.body.className = t==='dark'?'theme-dark':''; document.getElementById('theme-select').value = t; }
-    function resetTasks() { const today=getTodayDateStr(), mon=getMonday(new Date()), monthFirst=getFirstOfMonth(new Date()); let ch=false; data.tasks.forEach(task=>{ if(task.type==='daily' && task.lastReset!==today) { task.completed=false; task.lastReset=today; ch=true; } else if(task.type==='weekly' && task.lastReset!==mon) { task.completed=false; task.lastReset=mon; ch=true; } else if(task.type==='monthly' && task.lastReset!==monthFirst) { task.completed=false; task.lastReset=monthFirst; ch=true; } }); if(ch) saveData(); }
-    function getTaskDueToday(task) { const today=getTodayDateStr(); if(task.type==='daily') return task.lastReset===today && !task.completed; if(task.type==='weekly') return task.lastReset===getMonday(new Date()) && !task.completed; if(task.type==='monthly') return task.lastReset===getFirstOfMonth(new Date()) && !task.completed; if(task.type==='priority' && task.dueDate===today && !task.completed) return true; return false; }
+    function resetTasks() {
+      const today = getTodayDateStr(), mon = getMonday(new Date()), monthFirst = getFirstOfMonth(new Date());
+      let ch = false;
+      data.tasks.forEach(task => {
+        if (task.type === 'daily' && task.lastReset !== today) { task.completed = false; task.lastReset = today; ch = true; }
+        else if (task.type === 'weekly' && task.lastReset !== mon) { task.completed = false; task.lastReset = mon; ch = true; }
+        else if (task.type === 'monthly' && task.lastReset !== monthFirst) { task.completed = false; task.lastReset = monthFirst; ch = true; }
+      });
+      if (ch) saveData();
+    }
+    function getTaskDueToday(task) {
+      const today = getTodayDateStr();
+      if (task.type === 'daily') return task.lastReset === today && !task.completed;
+      if (task.type === 'weekly') return task.lastReset === getMonday(new Date()) && !task.completed;
+      if (task.type === 'monthly') return task.lastReset === getFirstOfMonth(new Date()) && !task.completed;
+      if (task.type === 'priority' && task.dueDate === today && !task.completed) return true;
+      return false;
+    }
 
     function getEmployeeById(id) { return data.employees.find(e=>e.id==id); }
     function populateEmployeeSelect(sel, selId=null) { sel.innerHTML='<option value="">-- None --</option>'+data.employees.map(e=>`<option value="${e.id}" ${e.id==selId?'selected':''}>${e.name}</option>`).join(''); }
@@ -405,12 +430,19 @@
     document.getElementById('cal-prev-month').addEventListener('click',()=>{ calDate.setMonth(calDate.getMonth()-1); renderCalendarTab(); });
     document.getElementById('cal-next-month').addEventListener('click',()=>{ calDate.setMonth(calDate.getMonth()+1); renderCalendarTab(); });
 
-    // --- Dashboard ---
+    // --- Dashboard (filtered) ---
     function renderDashboard() { resetTasks(); renderTodayTasks(); renderPriorityToday(); renderUpcomingEvents(); renderClientTaskLists(); populateFilterDropdowns(); }
+
+    function filterTasks(tasks) {
+      if (currentFilter.clientId !== 'all') tasks = tasks.filter(t => t.clientId === currentFilter.clientId);
+      if (currentFilter.employeeId !== 'all') tasks = tasks.filter(t => t.employeeId === currentFilter.employeeId);
+      return tasks;
+    }
 
     function renderTodayTasks() {
       const cont = document.getElementById('today-tasks');
-      const items = data.tasks.filter(t=>getTaskDueToday(t));
+      let items = data.tasks.filter(t=>getTaskDueToday(t));
+      items = filterTasks(items);
       if(!items.length){ cont.innerHTML='<p style="color:var(--text-secondary);font-size:14px;">All caught up!</p>'; return; }
       cont.innerHTML = items.map(task=>{
         const client = data.clients.find(c=>c.id==task.clientId);
@@ -428,7 +460,8 @@
     function renderPriorityToday() {
       const cont = document.getElementById('priority-today');
       const today = getTodayDateStr();
-      const items = data.tasks.filter(t=>t.type==='priority' && t.dueDate===today && !t.completed);
+      let items = data.tasks.filter(t=>t.type==='priority' && t.dueDate===today && !t.completed);
+      items = filterTasks(items);
       if(!items.length){ cont.innerHTML='<p style="color:var(--text-secondary);font-size:14px;">No priority tasks due today.</p>'; return; }
       cont.innerHTML = items.map(task=>{
         const client = data.clients.find(c=>c.id==task.clientId);
@@ -443,7 +476,8 @@
     function renderUpcomingEvents() {
       const cont = document.getElementById('upcoming-events');
       const today = getTodayDateStr();
-      const items = data.tasks.filter(t=>t.type==='event' && t.eventDate>=today && !t.completed).sort((a,b)=>a.eventDate.localeCompare(b.eventDate));
+      let items = data.tasks.filter(t=>t.type==='event' && t.eventDate>=today && !t.completed).sort((a,b)=>a.eventDate.localeCompare(b.eventDate));
+      items = filterTasks(items);
       if(!items.length){ cont.innerHTML='<p style="color:var(--text-secondary);font-size:14px;">No upcoming events.</p>'; return; }
       cont.innerHTML = items.map(task=>{
         const client = data.clients.find(c=>c.id==task.clientId);
@@ -455,13 +489,12 @@
       document.querySelectorAll('#upcoming-events .edit-event-btn').forEach(b=>b.addEventListener('click',()=>openEditEventModal(b.dataset.taskId)));
     }
 
-    // --- Client Task Lists ---
     function populateFilterDropdowns() {
       document.getElementById('filter-client').innerHTML = '<option value="all">All Clients</option>' + data.clients.map(c=>`<option value="${c.id}" ${c.id===currentFilter.clientId?'selected':''}>${c.name}</option>`).join('');
       document.getElementById('filter-employee').innerHTML = '<option value="all">All Employees</option>' + data.employees.map(e=>`<option value="${e.id}" ${e.id===currentFilter.employeeId?'selected':''}>${e.name}</option>`).join('');
     }
-    document.getElementById('filter-client').addEventListener('change',function(){ currentFilter.clientId=this.value; renderClientTaskLists(); });
-    document.getElementById('filter-employee').addEventListener('change',function(){ currentFilter.employeeId=this.value; renderClientTaskLists(); });
+    document.getElementById('filter-client').addEventListener('change',function(){ currentFilter.clientId=this.value; renderDashboard(); });
+    document.getElementById('filter-employee').addEventListener('change',function(){ currentFilter.employeeId=this.value; renderDashboard(); });
 
     function renderClientTaskLists() {
       const cont = document.getElementById('dashboard-clients');
@@ -618,9 +651,16 @@
       }
     });
 
-    // Init
+    // ---------- FIX: normalise missing lastReset before resetTasks ----------
     (async function init() {
       await loadData();
+      // ensure every daily/weekly/monthly task has a lastReset
+      const today = getTodayDateStr();
+      data.tasks.forEach(task => {
+        if ((task.type === 'daily' || task.type === 'weekly' || task.type === 'monthly') && !task.lastReset) {
+          task.lastReset = today;
+        }
+      });
       applyTheme(data.theme);
       resetTasks();
       renderDashboard();
