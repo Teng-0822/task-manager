@@ -281,8 +281,8 @@
 
 <script>
   (function() {
-    const DEFAULT_API_URL = 'https://script.google.com/macros/s/AKfycbxBk3RNTHgSeNOGV8TEAAVXsQvBYqPuFF7RQ745Wftx4h5IlBTejuFsDeZBiNyNk603/exec';
-    let data = { clients: [], tasks: [], prompts: [], employees: [], theme: 'blue' };
+    const DEFAULT_API_URL = 'https://script.google.com/macros/s/AKfycbyg9xNUqJNsnHNgUSG_3UOTSLHcp2FKx1F2892KjaUcpUEGyv9Kvypio4xv2cBNtXRr/exec';
+    let data = { clients: [], tasks: [], prompts: [], employees: [], theme: 'blue', webAppUrl: '' };
     let currentFilter = { clientId: 'all', employeeId: 'all' };
     let calDate = new Date();
     let selectedCalDate = null;
@@ -295,8 +295,15 @@
         const res = await fetch(getApiUrl() + '?action=load');
         if (!res.ok) throw new Error('Network error');
         const text = await res.text();
-        if (text) data = JSON.parse(text);
-        else data = { clients: [], tasks: [], prompts: [], employees: [], theme: 'blue' };
+        if (text) {
+          data = JSON.parse(text);
+          // If a web app URL is stored in the sheet, use it
+          if (data.webAppUrl) {
+            localStorage.setItem('clientManagerApiUrl', data.webAppUrl);
+          }
+        } else {
+          data = { clients: [], tasks: [], prompts: [], employees: [], theme: 'blue' };
+        }
       } catch (e) {
         console.error('Load failed, using default data', e);
         data = { clients: [], tasks: [], prompts: [], employees: [], theme: 'blue' };
@@ -311,6 +318,7 @@
 
     async function saveData() {
       try {
+        data.webAppUrl = getApiUrl();   // always include the current URL
         await fetch(getApiUrl() + '?action=save', { method: 'POST', body: JSON.stringify(data) });
       } catch (e) { console.error('Save failed', e); }
     }
@@ -603,7 +611,10 @@
       const url = document.getElementById('api-url').value.trim();
       if(url){
         localStorage.setItem('clientManagerApiUrl', url);
-        alert('API URL saved. Reload the page to apply.');
+        data.webAppUrl = url;
+        saveData().then(() => {
+          alert('API URL saved. Reload the page to apply the new URL for future loads.');
+        });
       }
     });
 
