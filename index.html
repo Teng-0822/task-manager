@@ -3,9 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Client & Task Manager – GitHub Sync</title>
+  <title>Client & Task Manager</title>
   <style>
-    /* ========== VARIABLES & BASE ========== */
     * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', system-ui, sans-serif; }
     :root {
       --primary: #3b82f6;
@@ -34,7 +33,6 @@
       border-radius: var(--radius); box-shadow: var(--shadow-md); overflow: hidden;
       border: 1px solid var(--border);
     }
-    /* ========== TABS ========== */
     .tabs {
       display: flex; align-items: center; gap: 8px; padding: 8px 20px;
       border-bottom: 1px solid var(--border); background: var(--surface);
@@ -55,7 +53,6 @@
       transition: all var(--transition); color: var(--text-secondary);
     }
     .settings-btn:hover { background: var(--primary-light); color: var(--primary); border-color: var(--primary); }
-    /* ========== CONTENT AREAS ========== */
     .tab-content { padding: 24px; display: none; animation: fadeSlide 0.25s ease forwards; }
     .tab-content.active { display: block; }
     @keyframes fadeSlide { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
@@ -76,12 +73,10 @@
     }
     .today-title { font-weight: 600; margin-bottom: 14px; color: var(--text); font-size: 15px; }
 
-    /* ========== FILTER BAR ========== */
     .filter-bar { display: flex; gap: 12px; align-items: center; margin-bottom: 20px; }
     .filter-bar select { padding: 6px 12px; border: 1px solid var(--border); border-radius: 8px; font-size: 13px; background: var(--surface); color: var(--text); }
     .button-row { display: flex; gap: 8px; margin-left: auto; }
 
-    /* ========== TASK ITEMS ========== */
     .task-item {
       display: flex; align-items: center; gap: 12px; padding: 10px 14px; background: var(--surface);
       border-radius: 8px; margin-bottom: 6px; border: 1px solid var(--border);
@@ -95,11 +90,10 @@
     .action-buttons { display: flex; align-items: center; gap: 8px; margin-left: auto; }
     .employee-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 4px; }
 
-    /* ========== SCROLLABLE CONTAINERS ========== */
+    /* Scrollable containers */
     #today-tasks, #priority-today, #upcoming-events { max-height: 220px; overflow-y: auto; }
     #dashboard-clients { max-height: calc(100vh - 280px); overflow-y: auto; }
 
-    /* ========== CLIENT CARDS ========== */
     .client-tasks-grid { display: flex; flex-direction: column; gap: 16px; }
     .client-card {
       background: var(--surface); border-radius: var(--radius); padding: 20px; box-shadow: var(--shadow-sm);
@@ -122,7 +116,7 @@
     .left-panel { width: 340px; flex-shrink: 0; display: flex; flex-direction: column; gap: 16px; }
     .right-panel { flex: 1; }
 
-    /* ========== CALENDAR ========== */
+    /* Calendar */
     .calendar-wrapper { background: var(--surface); border-radius: var(--radius); padding: 20px; box-shadow: var(--shadow-sm); border: 1px solid var(--border); }
     .calendar-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
     .month-title { font-size: 20px; font-weight: 600; color: var(--text); }
@@ -140,7 +134,7 @@
     .day-details { background: var(--surface); border-radius: var(--radius); padding: 16px; margin-top: 16px; border: 1px solid var(--border); animation: slideDown 0.25s ease; }
     @keyframes slideDown { from { opacity: 0; transform: translateY(-8px); } to { opacity: 1; transform: translateY(0); } }
 
-    /* ========== MODALS ========== */
+    /* Modals */
     .modal {
       display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
       background: rgba(0,0,0,0.25); backdrop-filter: blur(4px); justify-content: center; align-items: center; z-index: 100;
@@ -214,7 +208,7 @@
     <button class="settings-btn" id="open-settings">⚙️</button>
   </div>
 
-  <!-- Dashboard (scrollable containers) -->
+  <!-- Dashboard -->
   <div class="tab-content active" id="dashboard">
     <div class="dashboard-layout">
       <div class="left-panel">
@@ -244,7 +238,7 @@
     </div>
   </div>
 
-  <!-- Calendar, Clients, AI Prompts (unchanged) -->
+  <!-- Calendar -->
   <div class="tab-content" id="calendar">
     <h2>📅 Calendar</h2>
     <div class="calendar-wrapper">
@@ -258,19 +252,21 @@
     </div>
   </div>
 
+  <!-- Clients -->
   <div class="tab-content" id="clients">
     <h2>👥 Clients</h2>
     <div id="clients-list" class="clients-grid"></div>
     <button id="add-client-btn" style="margin-top: 16px;">+ Add Client</button>
   </div>
 
+  <!-- AI Prompts -->
   <div class="tab-content" id="prompts">
     <h2>🤖 AI Prompts</h2>
     <div id="prompts-clients-grid" class="clients-grid"></div>
   </div>
 </div>
 
-<!-- Modals (identical, only settings modal now includes GitHub tab) -->
+<!-- Modals -->
 <div class="modal" id="task-modal"><div class="modal-content"><h2>Add Task</h2><div class="form-group"><label>Client</label><select id="task-client"></select></div><div class="form-group"><label>Type</label><select id="task-type"><option value="daily">Daily</option><option value="weekly">Weekly</option><option value="monthly">Monthly</option></select></div><div class="form-group"><label>Task Description</label><input type="text" id="task-text" placeholder="e.g., Check emails"></div><div class="form-group"><label>Assign Employee (optional)</label><select id="task-employee"><option value="">-- None --</option></select></div><button id="save-task">Add</button><button class="secondary" id="close-task-modal">Cancel</button></div></div>
 <div class="modal" id="edit-task-modal"><div class="modal-content"><h2>Edit Task</h2><input type="hidden" id="edit-task-id"><div class="form-group"><label>Client</label><select id="edit-task-client"></select></div><div class="form-group"><label>Type</label><select id="edit-task-type"><option value="daily">Daily</option><option value="weekly">Weekly</option><option value="monthly">Monthly</option></select></div><div class="form-group"><label>Task Description</label><input type="text" id="edit-task-text"></div><div class="form-group"><label>Assign Employee</label><select id="edit-task-employee"><option value="">-- None --</option></select></div><button id="save-edit-task">Save Changes</button><button class="secondary" id="close-edit-task-modal">Cancel</button></div></div>
 <div class="modal" id="prio-modal"><div class="modal-content"><h2 id="prio-modal-title">Add Priority Task</h2><input type="hidden" id="prio-edit-id"><div class="form-group"><label>Client</label><select id="prio-client"></select></div><div class="form-group"><label>Description</label><input type="text" id="prio-text" placeholder="Task description"></div><div class="form-group"><label>Urgency</label><select id="prio-urgency"><option value="normal">Normal</option><option value="important">Important</option><option value="critical">Critical</option><option value="urgent">Urgent</option></select></div><div class="form-group"><label>Due Date</label><input type="date" id="prio-date"></div><div class="form-group"><label>Assign Employee (optional)</label><select id="prio-employee"><option value="">-- None --</option></select></div><button id="save-prio">Save</button><button class="secondary" id="close-prio-modal">Cancel</button></div></div>
@@ -278,46 +274,47 @@
 <div class="modal" id="client-modal"><div class="modal-content"><h2 id="client-modal-title">Add Client</h2><input type="hidden" id="edit-client-id"><div class="form-group"><label>Client Name</label><input type="text" id="client-name"></div><div class="form-group"><label>Work Start Time</label><input type="time" id="client-start"></div><div class="form-group"><label>Work End Time</label><input type="time" id="client-end"></div><div class="form-group"><label>Location / Timezone</label><input type="text" id="client-location" placeholder="e.g., Asia/Manila" list="timezone-list"><datalist id="timezone-list"><option value="Asia/Manila">Philippines</option><option value="America/Los_Angeles">San Francisco</option><option value="America/New_York">New York</option><option value="America/Chicago">Chicago</option><option value="America/Denver">Denver</option><option value="Europe/London">London</option><option value="Europe/Paris">Paris</option><option value="Asia/Tokyo">Tokyo</option><option value="Asia/Dubai">Dubai</option><option value="Australia/Sydney">Sydney</option></datalist></div><div class="form-group"><label>Color Palette</label><div id="color-list" class="dynamic-list"></div><div class="hex-input-group"><input type="color" id="new-color-picker" value="#3b82f6"><input type="text" id="new-color-hex" placeholder="#3b82f6" maxlength="7" value="#3b82f6"><button id="add-color-btn" class="secondary compact-btn">Add Color</button></div></div><div class="form-group"><label>Fonts</label><div id="font-list" class="dynamic-list"></div><div style="display:flex; gap:8px; margin-top:5px;"><input type="text" id="new-font" placeholder="Font name (e.g., Open Sans)"><button id="add-font-btn" class="secondary compact-btn">Add Font</button></div></div><button id="save-client">Save</button><button class="secondary" id="close-client-modal">Cancel</button></div></div>
 <div class="modal" id="prompt-modal"><div class="modal-content"><h2 id="prompt-modal-title">Add Prompt</h2><input type="hidden" id="prompt-client-id-hidden"><input type="hidden" id="edit-prompt-id"><div class="form-group" id="prompt-type-group"><label>Type</label><select id="prompt-type"><option value="text">Text only</option><option value="image">Image generator</option></select></div><div id="text-fields"><div class="form-group"><label>Title</label><input type="text" id="prompt-title"></div><div class="form-group"><label>Link</label><input type="url" id="prompt-link"></div></div><div id="image-fields" style="display:none;"><div class="form-group"><label>Size</label><input type="text" id="prompt-size" placeholder="e.g., 1:1, 4:5"></div><div class="form-group"><label>Topic</label><textarea id="prompt-topic" rows="3"></textarea></div><div class="form-group"><label>Caption</label><textarea id="prompt-caption" rows="3"></textarea></div></div><button id="save-prompt-btn">Save</button><button class="secondary" id="close-prompt-modal">Cancel</button></div></div>
 <div class="modal" id="generate-modal"><div class="modal-content"><h2>Generated Prompt</h2><textarea class="prompt-output" id="generated-prompt" readonly></textarea><button id="copy-prompt">Copy to Clipboard</button><button class="secondary" id="close-generate-modal">Close</button></div></div>
-<!-- Settings Modal with GitHub tab -->
-<div class="modal" id="settings-modal"><div class="modal-content" style="max-width:560px;"><h2>Settings</h2>
-  <div class="settings-tabs">
-    <button class="settings-tab-btn active" data-setting="theme">Theme</button>
-    <button class="settings-tab-btn" data-setting="employees">Employees</button>
-    <button class="settings-tab-btn" data-setting="github">GitHub</button>
-  </div>
-  <div id="theme-panel"><div class="form-group"><label>Select Theme</label><select id="theme-select"><option value="blue">Blue</option><option value="purple">Purple</option><option value="green">Green</option><option value="dark">Dark</option></select></div></div>
-  <div id="employees-panel" style="display:none;"><div id="employees-list"></div><button id="add-employee-btn" class="secondary" style="margin-top:12px;">+ Add Employee</button></div>
-  <div id="github-panel" style="display:none;">
-    <div class="form-group"><label>Personal Access Token</label><input type="password" id="github-token" placeholder="ghp_..."></div>
-    <div class="form-group"><label>Repository (owner/repo)</label><input type="text" id="github-repo" placeholder="username/repository"></div>
-    <div class="form-group"><label>File path</label><input type="text" id="github-path" placeholder="to-do-list.json" value="to-do-list.json"></div>
-    <button id="save-github-config" class="secondary">Save GitHub Config</button>
-    <p style="font-size:12px; color:var(--text-secondary); margin-top:8px;">⚠️ Token is stored locally. Use a fine‑grained token with <strong>repo</strong> scope.</p>
-  </div>
-  <button class="secondary" id="close-settings" style="margin-top:20px;">Close</button>
-</div></div>
+<div class="modal" id="settings-modal"><div class="modal-content" style="max-width:560px;"><h2>Settings</h2><div class="settings-tabs"><button class="settings-tab-btn active" data-setting="theme">Theme</button><button class="settings-tab-btn" data-setting="employees">Employees</button><button class="settings-tab-btn" data-setting="api">API</button></div><div id="theme-panel"><div class="form-group"><label>Select Theme</label><select id="theme-select"><option value="blue">Blue</option><option value="purple">Purple</option><option value="green">Green</option><option value="dark">Dark</option></select></div></div><div id="employees-panel" style="display:none;"><div id="employees-list"></div><button id="add-employee-btn" class="secondary" style="margin-top:12px;">+ Add Employee</button></div><div id="api-panel" style="display:none;"><div class="form-group"><label>Web App URL</label><input type="text" id="api-url" placeholder="https://script.google.com/macros/s/..."></div><button id="save-api-url" class="secondary">Save URL</button></div><button class="secondary" id="close-settings" style="margin-top:20px;">Close</button></div></div>
 <div class="modal" id="employee-modal"><div class="modal-content"><h2 id="employee-modal-title">Add Employee</h2><input type="hidden" id="edit-employee-id"><div class="form-group"><label>Name</label><input type="text" id="employee-name"></div><div class="form-group"><label>Color</label><div class="hex-input-group"><input type="color" id="employee-color-picker" value="#3b82f6"><input type="text" id="employee-color-hex" placeholder="#3b82f6" maxlength="7" value="#3b82f6"></div></div><button id="save-employee">Save</button><button class="secondary" id="close-employee-modal">Cancel</button></div></div>
 <div class="modal" id="confirm-modal"><div class="modal-content confirm-modal-content" style="max-width:400px; text-align:center;"><p id="confirm-message"></p><div class="confirm-modal-actions" style="display:flex; gap:12px; justify-content:center;"><button id="confirm-yes">Yes, delete</button><button class="secondary" id="confirm-no">Cancel</button></div></div></div>
 
 <script>
   (function() {
-    // ---------- DATA ----------
-    let data = {
-      clients: [],
-      tasks: [],
-      prompts: [],
-      employees: [],
-      theme: 'blue',
-      // GitHub config
-      gitHubToken: '',
-      gitHubRepo: '',
-      gitHubFilePath: 'to-do-list.json'
-    };
+    const DEFAULT_API_URL = 'https://script.google.com/macros/s/AKfycbxBk3RNTHgSeNOGV8TEAAVXsQvBYqPuFF7RQ745Wftx4h5IlBTejuFsDeZBiNyNk603/exec';
+    let data = { clients: [], tasks: [], prompts: [], employees: [], theme: 'blue' };
     let currentFilter = { clientId: 'all', employeeId: 'all' };
     let calDate = new Date();
     let selectedCalDate = null;
 
-    // ---------- HELPERS ----------
+    // API helpers
+    function getApiUrl() { return localStorage.getItem('clientManagerApiUrl') || DEFAULT_API_URL; }
+
+    async function loadData() {
+      try {
+        const res = await fetch(getApiUrl() + '?action=load');
+        if (!res.ok) throw new Error('Network error');
+        const text = await res.text();
+        if (text) data = JSON.parse(text);
+        else data = { clients: [], tasks: [], prompts: [], employees: [], theme: 'blue' };
+      } catch (e) {
+        console.error('Load failed, using default data', e);
+        data = { clients: [], tasks: [], prompts: [], employees: [], theme: 'blue' };
+      }
+      if (!data.clients) data.clients = [];
+      if (!data.tasks) data.tasks = [];
+      if (!data.prompts) data.prompts = [];
+      if (!data.employees) data.employees = [];
+      if (!data.theme) data.theme = 'blue';
+      data.clients.forEach(c => { if (c.location === undefined) c.location = ''; });
+    }
+
+    async function saveData() {
+      try {
+        await fetch(getApiUrl() + '?action=save', { method: 'POST', body: JSON.stringify(data) });
+      } catch (e) { console.error('Save failed', e); }
+    }
+
+    // --- Helpers ---
     function to12h(t) { if(!t) return ''; const [h,m]=t.split(':').map(Number); const ampm=h>=12?'pm':'am'; const h12=h%12||12; return `${h12}:${String(m).padStart(2,'0')}${ampm}`; }
     function tzLabel(tz) { const m={'Asia/Manila':'PH-Manila','America/Los_Angeles':'USA-LA','America/New_York':'USA-NY','America/Chicago':'USA-CHI','America/Denver':'USA-DEN','Europe/London':'UK-London','Europe/Paris':'FR-Paris','Asia/Tokyo':'JP-Tokyo','Asia/Dubai':'UAE-Dubai','Australia/Sydney':'AU-Sydney'}; return m[tz]||tz.replace(/_/g,' ').split('/').pop(); }
     function updatePHClock() { const el=document.getElementById('ph-clock'); if(!el) return; const now=new Date(); el.innerHTML=`🇵🇭 ${new Intl.DateTimeFormat('en-US',{timeZone:'Asia/Manila',hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:true}).format(now)}`; }
@@ -331,133 +328,13 @@
     function getMonday(d) { const dt=new Date(d); const day=dt.getDay(); const diff=dt.getDate()-day+(day===0?-6:1); dt.setDate(diff); return dt.toISOString().split('T')[0]; }
     function getFirstOfMonth(d) { const dt=new Date(d); return `${dt.getFullYear()}-${String(dt.getMonth()+1).padStart(2,'0')}-01`; }
 
-    // ---------- GITHUB SYNC ----------
-    async function pushToGitHub() {
-      if (!data.gitHubToken || !data.gitHubRepo || !data.gitHubFilePath) return;
-      const json = JSON.stringify(data, null, 2);
-      const content = btoa(unescape(encodeURIComponent(json))); // base64
-      const url = `https://api.github.com/repos/${data.gitHubRepo}/contents/${data.gitHubFilePath}`;
-      try {
-        // Get current file SHA (if exists)
-        let sha = '';
-        const getRes = await fetch(url, {
-          headers: { Authorization: `token ${data.gitHubToken}` }
-        });
-        if (getRes.ok) {
-          const fileData = await getRes.json();
-          sha = fileData.sha;
-        }
-        // Upsert (create or update)
-        const body = {
-          message: `Update ${data.gitHubFilePath} [${new Date().toISOString()}]`,
-          content: content,
-          branch: 'main' // or 'master' – adjust if needed
-        };
-        if (sha) body.sha = sha;
-        const putRes = await fetch(url, {
-          method: 'PUT',
-          headers: {
-            Authorization: `token ${data.gitHubToken}`,
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify(body)
-        });
-        if (!putRes.ok) console.error('GitHub push failed:', putRes.status);
-      } catch (e) {
-        console.error('GitHub push error:', e);
-      }
-    }
-
-    async function loadFromGitHub() {
-      if (!data.gitHubToken || !data.gitHubRepo || !data.gitHubFilePath) return false;
-      const url = `https://api.github.com/repos/${data.gitHubRepo}/contents/${data.gitHubFilePath}`;
-      try {
-        const res = await fetch(url, {
-          headers: { Authorization: `token ${data.gitHubToken}` }
-        });
-        if (!res.ok) return false;
-        const fileData = await res.json();
-        const json = decodeURIComponent(escape(atob(fileData.content)));
-        const parsed = JSON.parse(json);
-        // Merge into data
-        data = { ...data, ...parsed }; // preserve config fields
-        saveLocal();
-        return true;
-      } catch (e) {
-        console.error('GitHub load error:', e);
-        return false;
-      }
-    }
-
-    // ---------- STORAGE ----------
-    function saveLocal() {
-      localStorage.setItem('clientManagerData', JSON.stringify(data));
-    }
-
-    async function saveData() {
-      saveLocal();
-      await pushToGitHub();
-    }
-
-    async function loadData() {
-      const local = localStorage.getItem('clientManagerData');
-      if (local) {
-        try { data = JSON.parse(local); } catch(e) { data = { clients:[], tasks:[], prompts:[], employees:[], theme:'blue', gitHubToken:'', gitHubRepo:'', gitHubFilePath:'to-do-list.json' }; }
-      }
-      // Ensure defaults
-      if (!data.clients) data.clients = [];
-      if (!data.tasks) data.tasks = [];
-      if (!data.prompts) data.prompts = [];
-      if (!data.employees) data.employees = [];
-      if (!data.theme) data.theme = 'blue';
-      if (data.gitHubToken === undefined) data.gitHubToken = '';
-      if (data.gitHubRepo === undefined) data.gitHubRepo = '';
-      if (data.gitHubFilePath === undefined) data.gitHubFilePath = 'to-do-list.json';
-      // Load from GitHub if configured
-      if (data.gitHubToken && data.gitHubRepo) {
-        const loaded = await loadFromGitHub();
-        if (loaded) saveLocal(); // update local with fresh data
-      }
-    }
-
-    function applyTheme(t) {
-      document.body.className = t==='dark'?'theme-dark':'';
-      document.getElementById('theme-select').value = t;
-    }
-
-    function resetTasks() {
-      const today=getTodayDateStr(), mon=getMonday(new Date()), monthFirst=getFirstOfMonth(new Date());
-      let ch=false;
-      data.tasks.forEach(task=>{
-        if(task.type==='daily' && task.lastReset!==today) { task.completed=false; task.lastReset=today; ch=true; }
-        else if(task.type==='weekly' && task.lastReset!==mon) { task.completed=false; task.lastReset=mon; ch=true; }
-        else if(task.type==='monthly' && task.lastReset!==monthFirst) { task.completed=false; task.lastReset=monthFirst; ch=true; }
-      });
-      if(ch) saveData();
-    }
-    function getTaskDueToday(task) {
-      const today=getTodayDateStr();
-      if(task.type==='daily') return task.lastReset===today && !task.completed;
-      if(task.type==='weekly') return task.lastReset===getMonday(new Date()) && !task.completed;
-      if(task.type==='monthly') return task.lastReset===getFirstOfMonth(new Date()) && !task.completed;
-      if(task.type==='priority' && task.dueDate===today && !task.completed) return true;
-      return false;
-    }
+    function applyTheme(t) { document.body.className = t==='dark'?'theme-dark':''; document.getElementById('theme-select').value = t; }
+    function resetTasks() { const today=getTodayDateStr(), mon=getMonday(new Date()), monthFirst=getFirstOfMonth(new Date()); let ch=false; data.tasks.forEach(task=>{ if(task.type==='daily' && task.lastReset!==today) { task.completed=false; task.lastReset=today; ch=true; } else if(task.type==='weekly' && task.lastReset!==mon) { task.completed=false; task.lastReset=mon; ch=true; } else if(task.type==='monthly' && task.lastReset!==monthFirst) { task.completed=false; task.lastReset=monthFirst; ch=true; } }); if(ch) saveData(); }
+    function getTaskDueToday(task) { const today=getTodayDateStr(); if(task.type==='daily') return task.lastReset===today && !task.completed; if(task.type==='weekly') return task.lastReset===getMonday(new Date()) && !task.completed; if(task.type==='monthly') return task.lastReset===getFirstOfMonth(new Date()) && !task.completed; if(task.type==='priority' && task.dueDate===today && !task.completed) return true; return false; }
 
     function getEmployeeById(id) { return data.employees.find(e=>e.id==id); }
-    function populateEmployeeSelect(sel, selId=null) {
-      sel.innerHTML='<option value="">-- None --</option>'+data.employees.map(e=>`<option value="${e.id}" ${e.id==selId?'selected':''}>${e.name}</option>`).join('');
-    }
-    function showConfirm(msg, cb) {
-      const modal=document.getElementById('confirm-modal');
-      document.getElementById('confirm-message').textContent=msg;
-      modal.classList.add('active');
-      function close(){ modal.classList.remove('active'); document.getElementById('confirm-yes').removeEventListener('click',yes); document.getElementById('confirm-no').removeEventListener('click',no); }
-      function yes(){ close(); if(cb) cb(); }
-      function no(){ close(); }
-      document.getElementById('confirm-yes').addEventListener('click',yes);
-      document.getElementById('confirm-no').addEventListener('click',no);
-    }
+    function populateEmployeeSelect(sel, selId=null) { sel.innerHTML='<option value="">-- None --</option>'+data.employees.map(e=>`<option value="${e.id}" ${e.id==selId?'selected':''}>${e.name}</option>`).join(''); }
+    function showConfirm(msg, cb) { const modal=document.getElementById('confirm-modal'); document.getElementById('confirm-message').textContent=msg; modal.classList.add('active'); function close(){ modal.classList.remove('active'); document.getElementById('confirm-yes').removeEventListener('click',yes); document.getElementById('confirm-no').removeEventListener('click',no); } function yes(){ close(); if(cb) cb(); } function no(){ close(); } document.getElementById('confirm-yes').addEventListener('click',yes); document.getElementById('confirm-no').addEventListener('click',no); }
 
     function switchTab(tabId) {
       document.querySelectorAll('.tab-content').forEach(el=>el.classList.remove('active'));
@@ -473,7 +350,7 @@
 
     function urgencyColor(u) { switch(u) { case 'important': return '#facc15'; case 'critical': return '#f97316'; case 'urgent': return '#ef4444'; default: return '#94a3b8'; } }
 
-    // ---------- CALENDAR ----------
+    // --- Calendar ---
     function getEventsForDate(d) { return data.tasks.filter(t=>(t.type==='priority' && t.dueDate===d) || (t.type==='event' && t.eventDate===d)); }
     function renderCalendarTab() {
       const year=calDate.getFullYear(), month=calDate.getMonth();
@@ -519,8 +396,9 @@
     document.getElementById('cal-prev-month').addEventListener('click',()=>{ calDate.setMonth(calDate.getMonth()-1); renderCalendarTab(); });
     document.getElementById('cal-next-month').addEventListener('click',()=>{ calDate.setMonth(calDate.getMonth()+1); renderCalendarTab(); });
 
-    // ---------- DASHBOARD ----------
+    // --- Dashboard ---
     function renderDashboard() { resetTasks(); renderTodayTasks(); renderPriorityToday(); renderUpcomingEvents(); renderClientTaskLists(); populateFilterDropdowns(); }
+
     function renderTodayTasks() {
       const cont = document.getElementById('today-tasks');
       const items = data.tasks.filter(t=>getTaskDueToday(t));
@@ -537,6 +415,7 @@
       document.querySelectorAll('#today-tasks .edit-prio-btn').forEach(b=>b.addEventListener('click',()=>openEditPrioModal(b.dataset.taskId)));
       document.querySelectorAll('#today-tasks .edit-event-btn').forEach(b=>b.addEventListener('click',()=>openEditEventModal(b.dataset.taskId)));
     }
+
     function renderPriorityToday() {
       const cont = document.getElementById('priority-today');
       const today = getTodayDateStr();
@@ -551,6 +430,7 @@
       }).join('');
       document.querySelectorAll('#priority-today .edit-prio-btn').forEach(b=>b.addEventListener('click',()=>openEditPrioModal(b.dataset.taskId)));
     }
+
     function renderUpcomingEvents() {
       const cont = document.getElementById('upcoming-events');
       const today = getTodayDateStr();
@@ -566,7 +446,7 @@
       document.querySelectorAll('#upcoming-events .edit-event-btn').forEach(b=>b.addEventListener('click',()=>openEditEventModal(b.dataset.taskId)));
     }
 
-    // ---------- CLIENT TASK LISTS ----------
+    // --- Client Task Lists ---
     function populateFilterDropdowns() {
       document.getElementById('filter-client').innerHTML = '<option value="all">All Clients</option>' + data.clients.map(c=>`<option value="${c.id}" ${c.id===currentFilter.clientId?'selected':''}>${c.name}</option>`).join('');
       document.getElementById('filter-employee').innerHTML = '<option value="all">All Employees</option>' + data.employees.map(e=>`<option value="${e.id}" ${e.id===currentFilter.employeeId?'selected':''}>${e.name}</option>`).join('');
@@ -628,7 +508,7 @@
       cont.querySelectorAll('[data-delete-task]').forEach(btn=>{ btn.addEventListener('click',function(){ const id=this.dataset.deleteTask; showConfirm('Delete this task?',()=>{ data.tasks=data.tasks.filter(t=>t.id!=id); saveData(); renderDashboard(); }); }); });
     }
 
-    // Add Task / Prio / Event handlers (unchanged)
+    // --- Add Task / Prio / Event handlers ---
     document.getElementById('add-task-btn').addEventListener('click',()=>{ populateClientSelect(document.getElementById('task-client')); populateEmployeeSelect(document.getElementById('task-employee')); document.getElementById('task-text').value=''; document.getElementById('task-modal').classList.add('active'); });
     document.getElementById('add-prio-btn').addEventListener('click',()=>{ document.getElementById('prio-edit-id').value=''; document.getElementById('prio-modal-title').textContent='Add Priority Task'; document.getElementById('save-prio').textContent='Add'; populateClientSelect(document.getElementById('prio-client')); populateEmployeeSelect(document.getElementById('prio-employee')); document.getElementById('prio-text').value=''; document.getElementById('prio-urgency').value='normal'; document.getElementById('prio-date').value=''; document.getElementById('prio-modal').classList.add('active'); });
     document.getElementById('add-event-btn').addEventListener('click',()=>{ document.getElementById('event-edit-id').value=''; document.getElementById('event-modal-title').textContent='Add Event'; document.getElementById('save-event').textContent='Add'; populateClientSelect(document.getElementById('event-client')); populateEmployeeSelect(document.getElementById('event-employee')); document.getElementById('event-text').value=''; document.getElementById('event-date').value=''; document.getElementById('event-time').value=''; document.getElementById('event-type').value='meeting'; document.getElementById('event-custom-type').value=''; document.getElementById('event-custom-type-group').style.display='none'; document.getElementById('event-modal').classList.add('active'); });
@@ -662,7 +542,7 @@
     document.getElementById('close-prio-modal').addEventListener('click',()=>document.getElementById('prio-modal').classList.remove('active'));
     document.getElementById('close-event-modal').addEventListener('click',()=>document.getElementById('event-modal').classList.remove('active'));
 
-    // ---------- CLIENTS (unchanged) ----------
+    // --- Clients ---
     function renderClients() { const cont=document.getElementById('clients-list'); if(!data.clients.length){ cont.innerHTML='<p>No clients yet.</p>'; return; } cont.innerHTML = data.clients.map(c=>{ const accent=c.colors?.[0]||'#3b82f6'; const loc=c.location||''; const timeHtml=loc?`<span class="client-time" data-timezone="${loc}">(loading)</span>`:''; return `<div class="client-card-v2"><div class="card-header" style="background:linear-gradient(135deg,${accent},${adjustColor(accent,-20)});"><span>${c.name}</span><span style="font-size:14px;font-weight:400;">🕒 ${to12h(c.workStart)} - ${to12h(c.workEnd)}</span></div><div class="card-body">${loc?`<div class="location-time">📍 ${tzLabel(loc)} : ${timeHtml}</div>`:''}<div style="display:flex;align-items:center;gap:8px;margin:12px 0;"><span style="font-weight:600;color:var(--text);font-size:13px;">Color Palette:</span><div style="display:flex;gap:6px;">${c.colors.map(cl=>`<span class="color-dot" style="background:${cl};" title="${cl}"></span>`).join('')}</div></div><div style="display:flex;align-items:center;gap:8px;margin-top:8px;"><span style="font-weight:600;color:var(--text);font-size:13px;">Text Font:</span><div style="display:flex;gap:6px;">${c.fonts.map(f=>`<span class="font-tag">${f}</span>`).join('')||'<span style="color:var(--text-secondary);">None</span>'}</div></div><div class="card-actions" style="margin-top:16px;display:flex;gap:8px;"><button class="secondary compact-btn edit-client-btn" data-client-id="${c.id}">✎ Edit</button><button class="secondary compact-btn delete-client-btn" data-client-id="${c.id}">✕ Delete</button></div></div></div>`; }).join(''); cont.querySelectorAll('.delete-client-btn').forEach(b=>b.addEventListener('click',()=>{ const id=b.dataset.clientId; showConfirm('Delete this client and all its data?',()=>{ data.clients=data.clients.filter(c=>c.id!=id); data.tasks=data.tasks.filter(t=>t.clientId!=id); data.prompts=data.prompts.filter(p=>p.clientId!=id); saveData(); renderClients(); renderDashboard(); renderPromptTab(); updateClientTimes(); }); })); cont.querySelectorAll('.edit-client-btn').forEach(b=>b.addEventListener('click',()=>{ const client=data.clients.find(c=>c.id==b.dataset.clientId); if(client) openClientModal(client); })); updateClientTimes(); }
     function adjustColor(hex,p){ const num=parseInt(hex.replace('#',''),16), amt=Math.round(2.55*p), R=Math.min(255,Math.max(0,(num>>16)+amt)), G=Math.min(255,Math.max(0,(num>>8&0xFF)+amt)), B=Math.min(255,Math.max(0,(num&0xFF)+amt)); return `#${(1<<24|R<<16|G<<8|B).toString(16).slice(1)}`; }
     let modalColors=[], modalFonts=[];
@@ -676,7 +556,7 @@
     document.getElementById('add-client-btn').addEventListener('click',()=>openClientModal());
     document.getElementById('close-client-modal').addEventListener('click',()=>document.getElementById('client-modal').classList.remove('active'));
 
-    // ---------- AI PROMPTS (unchanged) ----------
+    // --- AI Prompts ---
     function renderPromptTab() { const cont=document.getElementById('prompts-clients-grid'); if(!data.clients.length){ cont.innerHTML='<p>No clients yet.</p>'; return; } cont.innerHTML=data.clients.map(c=>{ const accent=c.colors?.[0]||'#3b82f6'; const prompts=data.prompts.filter(p=>p.clientId===c.id&&p.type==='text'); return `<div class="prompt-client-card"><div class="prompt-header" style="background:linear-gradient(135deg,${accent},${adjustColor(accent,-20)});">${c.name}</div><div class="prompt-body">${prompts.length?'': '<p style="color:var(--text-secondary);font-size:13px;">No text prompts saved.</p>'}${prompts.map(p=>`<div class="prompt-link"><a href="${p.link}" target="_blank" class="prompt-link-text">📄 ${p.title}</a><div class="prompt-link-actions"><button class="edit-prompt-btn" data-id="${p.id}" title="Edit">✏️</button><button class="delete-prompt-btn" data-id="${p.id}" title="Delete">🗑️</button></div></div>`).join('')}<div class="prompt-actions"><button class="compact-btn add-text-prompt-btn" data-client-id="${c.id}">➕ Text Only</button><button class="compact-btn add-image-prompt-btn" data-client-id="${c.id}">🖼️ Image Generator</button></div></div></div>`; }).join(''); cont.querySelectorAll('.edit-prompt-btn').forEach(b=>b.addEventListener('click',e=>{ e.stopPropagation(); const p=data.prompts.find(p=>p.id==b.dataset.id); if(p) openEditPromptModal(p); })); cont.querySelectorAll('.delete-prompt-btn').forEach(b=>b.addEventListener('click',e=>{ e.stopPropagation(); showConfirm('Delete this prompt?',()=>{ data.prompts=data.prompts.filter(p=>p.id!=b.dataset.id); saveData(); renderPromptTab(); }); })); cont.querySelectorAll('.add-text-prompt-btn').forEach(b=>b.addEventListener('click',()=>openPromptModal(b.dataset.clientId,'text'))); cont.querySelectorAll('.add-image-prompt-btn').forEach(b=>b.addEventListener('click',()=>openPromptModal(b.dataset.clientId,'image'))); }
     function openPromptModal(clientId,type,prompt=null){ document.getElementById('edit-prompt-id').value=prompt?prompt.id:''; document.getElementById('prompt-client-id-hidden').value=clientId; if(prompt){ document.getElementById('prompt-modal-title').textContent='Edit Text Prompt'; document.getElementById('prompt-type-group').style.display='none'; document.getElementById('prompt-type').value='text'; document.getElementById('text-fields').style.display='block'; document.getElementById('image-fields').style.display='none'; document.getElementById('save-prompt-btn').textContent='Update'; document.getElementById('prompt-title').value=prompt.title; document.getElementById('prompt-link').value=prompt.link; } else { document.getElementById('prompt-modal-title').textContent='Add Prompt'; document.getElementById('prompt-type-group').style.display='block'; document.getElementById('prompt-type').value=type; document.getElementById('text-fields').style.display=type==='text'?'block':'none'; document.getElementById('image-fields').style.display=type==='image'?'block':'none'; document.getElementById('save-prompt-btn').textContent=type==='image'?'Generate':'Save'; document.getElementById('prompt-title').value=''; document.getElementById('prompt-link').value=''; document.getElementById('prompt-size').value=''; document.getElementById('prompt-topic').value=''; document.getElementById('prompt-caption').value=''; } document.getElementById('prompt-modal').classList.add('active'); }
     function openEditPromptModal(p){ openPromptModal(p.clientId,'text',p); }
@@ -686,7 +566,7 @@
     document.getElementById('copy-prompt').addEventListener('click',()=>{ const ta=document.getElementById('generated-prompt'); ta.select(); document.execCommand('copy'); alert('Copied!'); });
     function populateClientSelect(sel,selId=null){ sel.innerHTML='<option value="">-- Choose --</option>'+data.clients.map(c=>`<option value="${c.id}" ${c.id===selId?'selected':''}>${c.name}</option>`).join(''); }
 
-    // ---------- SETTINGS & EMPLOYEES (unchanged) ----------
+    // --- Settings & Employees ---
     function renderSettingsEmployees(){ const list=document.getElementById('employees-list'); if(!data.employees.length){ list.innerHTML='<p>No employees added.</p>'; return; } list.innerHTML=data.employees.map(e=>`<div class="employee-item"><span class="color-dot" style="background:${e.color};" title="${e.color}"></span><span style="flex:1;">${e.name}</span><button class="secondary compact-btn edit-employee-btn" data-id="${e.id}">✎</button><button class="secondary compact-btn delete-employee-btn" data-id="${e.id}">✕</button></div>`).join(''); document.querySelectorAll('.edit-employee-btn').forEach(b=>b.addEventListener('click',()=>{ const e=data.employees.find(e=>e.id==b.dataset.id); if(e) openEmployeeModal(e); })); document.querySelectorAll('.delete-employee-btn').forEach(b=>b.addEventListener('click',()=>{ showConfirm('Delete this employee?',()=>{ data.employees=data.employees.filter(e=>e.id!=b.dataset.id); saveData(); renderSettingsEmployees(); renderDashboard(); }); })); }
     function openEmployeeModal(emp=null){ document.getElementById('edit-employee-id').value=emp?emp.id:''; document.getElementById('employee-modal-title').textContent=emp?'Edit Employee':'Add Employee'; document.getElementById('employee-name').value=emp?emp.name:''; const color=emp?emp.color:'#3b82f6'; document.getElementById('employee-color-picker').value=color; document.getElementById('employee-color-hex').value=color; document.getElementById('employee-modal').classList.add('active'); }
     document.getElementById('employee-color-picker').addEventListener('input',function(){ document.getElementById('employee-color-hex').value=this.value; });
@@ -694,42 +574,40 @@
     document.getElementById('add-employee-btn').addEventListener('click',()=>openEmployeeModal());
     document.getElementById('close-employee-modal').addEventListener('click',()=>document.getElementById('employee-modal').classList.remove('active'));
     document.getElementById('save-employee').addEventListener('click',()=>{ const id=document.getElementById('edit-employee-id').value, name=document.getElementById('employee-name').value.trim(), color=document.getElementById('employee-color-hex').value.trim(); if(!name) return alert('Name is required'); if(!/^#[0-9a-fA-F]{6}$/.test(color)) return alert('Please enter a valid hex color'); if(id){ const idx=data.employees.findIndex(e=>e.id===id); if(idx!==-1) data.employees[idx]={id,name,color}; } else data.employees.push({ id:Date.now().toString(), name, color }); saveData(); document.getElementById('employee-modal').classList.remove('active'); renderSettingsEmployees(); populateEmployeeSelect(document.getElementById('task-employee')); populateEmployeeSelect(document.getElementById('edit-task-employee')); populateEmployeeSelect(document.getElementById('prio-employee')); populateEmployeeSelect(document.getElementById('event-employee')); renderDashboard(); });
-    document.getElementById('open-settings').addEventListener('click',()=>{ document.getElementById('settings-modal').classList.add('active'); renderSettingsEmployees(); applyTheme(data.theme); document.querySelector('.settings-tab-btn[data-setting="theme"]').classList.add('active'); document.querySelector('.settings-tab-btn[data-setting="employees"]').classList.remove('active'); document.querySelector('.settings-tab-btn[data-setting="github"]').classList.remove('active'); document.getElementById('theme-panel').style.display='block'; document.getElementById('employees-panel').style.display='none'; document.getElementById('github-panel').style.display='none'; loadGitHubConfig(); });
+
+    // --- API URL settings ---
+    document.getElementById('open-settings').addEventListener('click',()=>{
+      document.getElementById('settings-modal').classList.add('active');
+      renderSettingsEmployees();
+      applyTheme(data.theme);
+      document.getElementById('api-url').value = getApiUrl();
+      document.querySelector('.settings-tab-btn[data-setting="theme"]').classList.add('active');
+      document.querySelector('.settings-tab-btn[data-setting="employees"]').classList.remove('active');
+      document.querySelector('.settings-tab-btn[data-setting="api"]').classList.remove('active');
+      document.getElementById('theme-panel').style.display='block';
+      document.getElementById('employees-panel').style.display='none';
+      document.getElementById('api-panel').style.display='none';
+    });
     document.getElementById('close-settings').addEventListener('click',()=>document.getElementById('settings-modal').classList.remove('active'));
-
-    // Settings tab switching (includes GitHub)
-    document.querySelectorAll('.settings-tab-btn').forEach(b=>b.addEventListener('click',()=>{
-      document.querySelectorAll('.settings-tab-btn').forEach(bb=>bb.classList.remove('active'));
-      b.classList.add('active');
-      const s=b.dataset.setting;
-      document.getElementById('theme-panel').style.display = s==='theme'?'block':'none';
-      document.getElementById('employees-panel').style.display = s==='employees'?'block':'none';
-      document.getElementById('github-panel').style.display = s==='github'?'block':'none';
-      if(s==='employees') renderSettingsEmployees();
-      if(s==='github') loadGitHubConfig();
+    document.querySelectorAll('.settings-tab-btn').forEach(btn=>btn.addEventListener('click',()=>{
+      document.querySelectorAll('.settings-tab-btn').forEach(b=>b.classList.remove('active'));
+      btn.classList.add('active');
+      const setting = btn.dataset.setting;
+      document.getElementById('theme-panel').style.display = setting==='theme'?'block':'none';
+      document.getElementById('employees-panel').style.display = setting==='employees'?'block':'none';
+      document.getElementById('api-panel').style.display = setting==='api'?'block':'none';
+      if(setting==='employees') renderSettingsEmployees();
     }));
-
-    function loadGitHubConfig() {
-      document.getElementById('github-token').value = data.gitHubToken || '';
-      document.getElementById('github-repo').value = data.gitHubRepo || '';
-      document.getElementById('github-path').value = data.gitHubFilePath || 'to-do-list.json';
-    }
-
-    document.getElementById('save-github-config').addEventListener('click',()=>{
-      data.gitHubToken = document.getElementById('github-token').value.trim();
-      data.gitHubRepo = document.getElementById('github-repo').value.trim();
-      data.gitHubFilePath = document.getElementById('github-path').value.trim() || 'to-do-list.json';
-      saveLocal();
-      alert('GitHub config saved. The app will now sync with your repository.');
-      // Optionally trigger an initial load from GitHub
-      loadFromGitHub().then(()=>{ renderDashboard(); });
+    document.getElementById('save-api-url').addEventListener('click',()=>{
+      const url = document.getElementById('api-url').value.trim();
+      if(url){
+        localStorage.setItem('clientManagerApiUrl', url);
+        alert('API URL saved. Reload the page to apply.');
+      }
     });
 
-    document.getElementById('theme-select').addEventListener('change',function(){ data.theme=this.value; saveData(); applyTheme(data.theme); });
-    window.addEventListener('click',e=>{ if(e.target.classList.contains('modal')) e.target.classList.remove('active'); });
-
     // Init
-    (async function(){
+    (async function init() {
       await loadData();
       applyTheme(data.theme);
       resetTasks();
