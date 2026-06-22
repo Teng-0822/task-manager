@@ -5,7 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Client & Task Manager</title>
   <style>
-    /* ---------- All original CSS (unchanged) ---------- */
     * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', system-ui, sans-serif; }
     :root {
       --primary: #3b82f6;
@@ -48,11 +47,21 @@
       --primary: #6366f1; --primary-light: #312e81;
     }
     .app { width:100%; max-width:1400px; background:var(--surface); border-radius:var(--radius); box-shadow:var(--shadow-md); overflow:hidden; border:1px solid var(--border); }
+    /* Notification bar */
+    #update-notification {
+      display: none;
+      background: #fef3c7;
+      color: #92400e;
+      padding: 8px 16px;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid #fbbf24;
+    }
     .tabs { display:flex; align-items:center; gap:8px; padding:8px 20px; border-bottom:1px solid var(--border); background:var(--surface); }
     .tab-btn { padding:8px 20px; background:transparent; border:none; color:var(--text-secondary); font-size:14px; font-weight:500; cursor:pointer; border-radius:8px; transition:all var(--transition); }
     .tab-btn:hover { background:var(--primary-light); color:var(--primary); }
     .tab-btn.active { background:var(--primary); color:white; font-weight:600; }
-    .today-day, .ph-clock { margin-left:auto; margin-right:8px; font-size:13px; color:var(--text-secondary); font-weight:500; }
+    .today-day, .ph-clock, .active-users { margin-left:auto; margin-right:8px; font-size:13px; color:var(--text-secondary); font-weight:500; }
     .settings-btn { background:transparent; border:1px solid var(--border); width:36px; height:36px; border-radius:8px; display:flex; align-items:center; justify-content:center; cursor:pointer; transition:all var(--transition); color:var(--text-secondary); }
     .settings-btn:hover { background:var(--primary-light); color:var(--primary); border-color:var(--primary); }
     .tab-content { padding:24px; display:none; animation:fadeSlide 0.25s ease forwards; }
@@ -142,6 +151,12 @@
 </head>
 <body>
 <div class="app">
+  <!-- Notification bar (hidden by default) -->
+  <div id="update-notification">
+    <span>🔄 Your co-worker updated the list.</span>
+    <button id="refresh-now-btn" style="background:#f59e0b; color:white; border:none; border-radius:6px; padding:6px 12px; cursor:pointer; font-weight:500;">↻ Refresh now</button>
+  </div>
+
   <div class="tabs">
     <button class="tab-btn active" data-tab="dashboard">📋 Dashboard</button>
     <button class="tab-btn" data-tab="calendar">📅 Calendar</button>
@@ -149,6 +164,7 @@
     <button class="tab-btn" data-tab="prompts">🤖 AI Prompts</button>
     <span class="today-day" id="today-day"></span>
     <span class="ph-clock" id="ph-clock"></span>
+    <span class="active-users" id="active-users">👥 0 online</span>
     <button class="settings-btn" id="open-settings">⚙️</button>
   </div>
 
@@ -210,7 +226,7 @@
   </div>
 </div>
 
-<!-- Modals (unchanged) -->
+<!-- Modals -->
 <div class="modal" id="task-modal"><div class="modal-content"><h2>Add Task</h2><div class="form-group"><label>Client</label><select id="task-client"></select></div><div class="form-group"><label>Type</label><select id="task-type"><option value="daily">Daily</option><option value="weekly">Weekly</option><option value="monthly">Monthly</option></select></div><div class="form-group"><label>Task Description</label><input type="text" id="task-text" placeholder="e.g., Check emails"></div><div class="form-group"><label>Assign Employee (optional)</label><select id="task-employee"><option value="">-- None --</option></select></div><button id="save-task">Add</button><button class="secondary" id="close-task-modal">Cancel</button></div></div>
 <div class="modal" id="edit-task-modal"><div class="modal-content"><h2>Edit Task</h2><input type="hidden" id="edit-task-id"><div class="form-group"><label>Client</label><select id="edit-task-client"></select></div><div class="form-group"><label>Type</label><select id="edit-task-type"><option value="daily">Daily</option><option value="weekly">Weekly</option><option value="monthly">Monthly</option></select></div><div class="form-group"><label>Task Description</label><input type="text" id="edit-task-text"></div><div class="form-group"><label>Assign Employee</label><select id="edit-task-employee"><option value="">-- None --</option></select></div><button id="save-edit-task">Save Changes</button><button class="secondary" id="close-edit-task-modal">Cancel</button></div></div>
 <div class="modal" id="prio-modal"><div class="modal-content"><h2 id="prio-modal-title">Add Priority Task</h2><input type="hidden" id="prio-edit-id"><div class="form-group"><label>Client</label><select id="prio-client"></select></div><div class="form-group"><label>Description</label><input type="text" id="prio-text" placeholder="Task description"></div><div class="form-group"><label>Urgency</label><select id="prio-urgency"><option value="normal">Normal</option><option value="important">Important</option><option value="critical">Critical</option><option value="urgent">Urgent</option></select></div><div class="form-group"><label>Due Date</label><input type="date" id="prio-date"></div><div class="form-group"><label>Assign Employee (optional)</label><select id="prio-employee"><option value="">-- None --</option></select></div><button id="save-prio">Save</button><button class="secondary" id="close-prio-modal">Cancel</button></div></div>
@@ -224,7 +240,8 @@
 
 <script>
   (function() {
-    const DEFAULT_API_URL = 'https://script.google.com/macros/s/AKfycbxXn296w-6u_2uSLyMeumIyYyghMb8VnGcYp5KMpGeECP7k4gz0p9ii5oibCwQrQEG7/exec';
+    // ⚠️ Use your latest web app URL here
+    const DEFAULT_API_URL = 'https://script.google.com/macros/s/AKfycbx8a_7rnDCV4loFv65wdh2JyNQl8IHx5b-NqVsAsIOA9slvqiRGEMREIqaIBQO9gu8l/exec';
     let data = { clients: [], tasks: [], prompts: [], employees: [], theme: 'blue', webAppUrl: '', lastModified: 0 };
     let currentFilter = { clientId: 'all', employeeId: 'all' };
     let calDate = new Date();
@@ -291,47 +308,55 @@
           activeUserCount = result.activeUsers;
           updateActiveUserDisplay();
         }
-      } catch (e) {
-        console.warn('Heartbeat failed', e);
-      }
+      } catch (e) { console.warn('Heartbeat failed', e); }
     }
 
     function updateActiveUserDisplay() {
       const el = document.getElementById('active-users');
-      if (el) {
-        const count = Math.max(0, activeUserCount - 1); // exclude self? Or show total including self
-        el.textContent = `👥 ${activeUserCount} online`;
-      }
+      if (el) el.textContent = `👥 ${activeUserCount} online`;
     }
 
-    // Polling
+    // Show refresh notification bar
+    function showUpdateNotification() {
+      document.getElementById('update-notification').style.display = 'flex';
+    }
+
+    function hideUpdateNotification() {
+      document.getElementById('update-notification').style.display = 'none';
+    }
+
+    // Polling – only shows notification, no auto refresh
     async function checkChanges() {
       try {
         const res = await fetch(getApiUrl() + `?action=checkChanges&lastModified=${data.lastModified}`);
         const result = await res.json();
         if (result.changed) {
-          await loadAllData();
-          data.lastModified = result.lastModified;
-          refreshCurrentView();
+          showUpdateNotification();
         }
         if (result.activeUsers !== undefined) {
           activeUserCount = result.activeUsers;
           updateActiveUserDisplay();
         }
-      } catch (e) {
-        console.warn('Polling error', e);
-      }
+      } catch (e) { console.warn('Polling error', e); }
     }
 
     function startPolling() {
       if (pollingInterval) clearInterval(pollingInterval);
-      // Send heartbeat immediately, then every 5 sec
       sendHeartbeat();
       pollingInterval = setInterval(() => {
         sendHeartbeat();
         checkChanges();
       }, 5000);
     }
+
+    // Manual refresh triggered by notification button
+    async function manualRefresh() {
+      hideUpdateNotification();
+      await loadAllData();
+      refreshCurrentView();
+    }
+
+    document.getElementById('refresh-now-btn').addEventListener('click', manualRefresh);
 
     function refreshCurrentView() {
       const activeTab = document.querySelector('.tab-content.active');
@@ -405,7 +430,7 @@
 
     function urgencyColor(u) { switch(u) { case 'important': return '#facc15'; case 'critical': return '#f97316'; case 'urgent': return '#ef4444'; default: return '#94a3b8'; } }
 
-    // ---------- CALENDAR (unchanged except save calls) ----------
+    // ---------- CALENDAR ----------
     function getEventsForDate(d) { return data.tasks.filter(t=>(t.type==='priority' && t.dueDate===d) || (t.type==='event' && t.eventDate===d)); }
     function renderCalendarTab() {
       const year=calDate.getFullYear(), month=calDate.getMonth();
