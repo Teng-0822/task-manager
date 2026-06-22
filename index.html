@@ -5,7 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Client & Task Manager</title>
   <style>
-    /* ---------- existing CSS (unchanged) ---------- */
     * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', system-ui, sans-serif; }
     :root {
       --primary: #3b82f6;
@@ -49,7 +48,6 @@
     }
     .app { width:100%; max-width:1400px; background:var(--surface); border-radius:var(--radius); box-shadow:var(--shadow-md); overflow:hidden; border:1px solid var(--border); }
 
-    /* Toast notification */
     .toast {
       position: fixed;
       bottom: 30px;
@@ -66,9 +64,7 @@
       transition: opacity 0.3s ease;
       pointer-events: none;
     }
-    .toast.show {
-      opacity: 1;
-    }
+    .toast.show { opacity: 1; }
 
     #update-notification {
       display: none;
@@ -80,13 +76,10 @@
       border-bottom: 1px solid #fbbf24;
     }
 
-    /* Loading overlay */
     #loading-overlay {
       position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
       background: rgba(0,0,0,0.2);
       backdrop-filter: blur(2px);
       z-index: 300;
@@ -103,8 +96,7 @@
       border: 1px solid var(--border);
     }
     .spinner {
-      width: 40px;
-      height: 40px;
+      width: 40px; height: 40px;
       border: 4px solid var(--border);
       border-top: 4px solid var(--primary);
       border-radius: 50%;
@@ -113,7 +105,6 @@
     }
     @keyframes spin { to { transform: rotate(360deg); } }
 
-    /* all other styles (tabs, cards, modals etc.) exactly as before */
     .tabs { display:flex; align-items:center; gap:8px; padding:8px 20px; border-bottom:1px solid var(--border); background:var(--surface); }
     .tab-btn { padding:8px 20px; background:transparent; border:none; color:var(--text-secondary); font-size:14px; font-weight:500; cursor:pointer; border-radius:8px; transition:all var(--transition); }
     .tab-btn:hover { background:var(--primary-light); color:var(--primary); }
@@ -208,18 +199,13 @@
 </head>
 <body>
 <div class="app">
-  <!-- Toast notification -->
   <div id="toast" class="toast"></div>
-
-  <!-- Loading overlay -->
   <div id="loading-overlay">
     <div class="loading-box">
       <div class="spinner"></div>
       <p style="color:var(--text); font-weight:500;">Loading latest data...</p>
     </div>
   </div>
-
-  <!-- Notification bar -->
   <div id="update-notification">
     <span>🔄 Your co-worker updated the list.</span>
     <button id="refresh-now-btn" style="background:#f59e0b; color:white; border:none; border-radius:6px; padding:6px 12px; cursor:pointer; font-weight:500;">↻ Refresh now</button>
@@ -236,7 +222,6 @@
     <button class="settings-btn" id="open-settings">⚙️</button>
   </div>
 
-  <!-- Dashboard -->
   <div class="tab-content active" id="dashboard">
     <div class="dashboard-layout">
       <div class="left-panel">
@@ -266,7 +251,6 @@
     </div>
   </div>
 
-  <!-- Calendar -->
   <div class="tab-content" id="calendar">
     <h2>📅 Calendar</h2>
     <div class="calendar-wrapper">
@@ -280,21 +264,19 @@
     </div>
   </div>
 
-  <!-- Clients -->
   <div class="tab-content" id="clients">
     <h2>👥 Clients</h2>
     <div id="clients-list" class="clients-grid"></div>
     <button id="add-client-btn" style="margin-top:16px;">+ Add Client</button>
   </div>
 
-  <!-- AI Prompts -->
   <div class="tab-content" id="prompts">
     <h2>🤖 AI Prompts</h2>
     <div id="prompts-clients-grid" class="clients-grid"></div>
   </div>
 </div>
 
-<!-- Modals (identical to previous complete version) -->
+<!-- All modals (unchanged) -->
 <div class="modal" id="task-modal"><div class="modal-content"><h2>Add Task</h2><div class="form-group"><label>Client</label><select id="task-client"></select></div><div class="form-group"><label>Type</label><select id="task-type"><option value="daily">Daily</option><option value="weekly">Weekly</option><option value="monthly">Monthly</option></select></div><div class="form-group"><label>Task Description</label><input type="text" id="task-text" placeholder="e.g., Check emails"></div><div class="form-group"><label>Assign Employee (optional)</label><select id="task-employee"><option value="">-- None --</option></select></div><button id="save-task">Add</button><button class="secondary" id="close-task-modal">Cancel</button></div></div>
 <div class="modal" id="edit-task-modal"><div class="modal-content"><h2>Edit Task</h2><input type="hidden" id="edit-task-id"><div class="form-group"><label>Client</label><select id="edit-task-client"></select></div><div class="form-group"><label>Type</label><select id="edit-task-type"><option value="daily">Daily</option><option value="weekly">Weekly</option><option value="monthly">Monthly</option></select></div><div class="form-group"><label>Task Description</label><input type="text" id="edit-task-text"></div><div class="form-group"><label>Assign Employee</label><select id="edit-task-employee"><option value="">-- None --</option></select></div><button id="save-edit-task">Save Changes</button><button class="secondary" id="close-edit-task-modal">Cancel</button></div></div>
 <div class="modal" id="prio-modal"><div class="modal-content"><h2 id="prio-modal-title">Add Priority Task</h2><input type="hidden" id="prio-edit-id"><div class="form-group"><label>Client</label><select id="prio-client"></select></div><div class="form-group"><label>Description</label><input type="text" id="prio-text" placeholder="Task description"></div><div class="form-group"><label>Urgency</label><select id="prio-urgency"><option value="normal">Normal</option><option value="important">Important</option><option value="critical">Critical</option><option value="urgent">Urgent</option></select></div><div class="form-group"><label>Due Date</label><input type="date" id="prio-date"></div><div class="form-group"><label>Assign Employee (optional)</label><select id="prio-employee"><option value="">-- None --</option></select></div><button id="save-prio">Save</button><button class="secondary" id="close-prio-modal">Cancel</button></div></div>
@@ -317,11 +299,10 @@
     let myUserId = localStorage.getItem('cm_userId') || 'user_' + Math.random().toString(36).substr(2, 9);
     localStorage.setItem('cm_userId', myUserId);
     let activeUserCount = 0;
-    let isRefreshing = false;   // ← prevent notification during manual refresh
+    let isRefreshing = false;
 
     function getApiUrl() { return localStorage.getItem('clientManagerApiUrl') || DEFAULT_API_URL; }
 
-    // ---------- DATA LOAD & SAVE ----------
     async function loadAllData() {
       try {
         const res = await fetch(getApiUrl() + '?action=load');
@@ -386,7 +367,7 @@
     }
 
     function showUpdateNotification() {
-      if (isRefreshing) return;   // block during manual refresh
+      if (isRefreshing) return;
       document.getElementById('update-notification').style.display = 'flex';
     }
 
@@ -402,7 +383,6 @@
       document.getElementById('loading-overlay').style.display = 'none';
     }
 
-    // Toast message
     function showToast(msg) {
       const toast = document.getElementById('toast');
       toast.textContent = msg;
@@ -413,11 +393,10 @@
     }
 
     async function checkChanges() {
-      if (isRefreshing) return;   // don't check while manual refresh is active
+      if (isRefreshing) return;
       try {
         const res = await fetch(getApiUrl() + `?action=checkChanges&lastModified=${data.lastModified}`);
         const result = await res.json();
-        // Skip notification if the change was made by the current user
         if (result.changed && result.lastModifier !== myUserId) {
           showUpdateNotification();
         }
@@ -441,7 +420,6 @@
       isRefreshing = true;
       hideUpdateNotification();
       showLoadingOverlay();
-
       try {
         await loadAllData();
         refreshCurrentView();
