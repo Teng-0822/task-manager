@@ -47,6 +47,28 @@
       --primary: #6366f1; --primary-light: #312e81;
     }
     .app { width:100%; max-width:1400px; background:var(--surface); border-radius:var(--radius); box-shadow:var(--shadow-md); overflow:hidden; border:1px solid var(--border); }
+
+    /* Toast notification */
+    .toast {
+      position: fixed;
+      bottom: 30px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: #10b981;
+      color: white;
+      padding: 12px 24px;
+      border-radius: 8px;
+      font-weight: 500;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+      z-index: 200;
+      opacity: 0;
+      transition: opacity 0.3s ease;
+      pointer-events: none;
+    }
+    .toast.show {
+      opacity: 1;
+    }
+
     #update-notification {
       display: none;
       background: #fef3c7;
@@ -150,6 +172,9 @@
 </head>
 <body>
 <div class="app">
+  <!-- Toast notification -->
+  <div id="toast" class="toast"></div>
+
   <!-- Notification bar -->
   <div id="update-notification">
     <span>🔄 Your co-worker updated the list.</span>
@@ -225,7 +250,7 @@
   </div>
 </div>
 
-<!-- Modals -->
+<!-- Modals (all unchanged) -->
 <div class="modal" id="task-modal"><div class="modal-content"><h2>Add Task</h2><div class="form-group"><label>Client</label><select id="task-client"></select></div><div class="form-group"><label>Type</label><select id="task-type"><option value="daily">Daily</option><option value="weekly">Weekly</option><option value="monthly">Monthly</option></select></div><div class="form-group"><label>Task Description</label><input type="text" id="task-text" placeholder="e.g., Check emails"></div><div class="form-group"><label>Assign Employee (optional)</label><select id="task-employee"><option value="">-- None --</option></select></div><button id="save-task">Add</button><button class="secondary" id="close-task-modal">Cancel</button></div></div>
 <div class="modal" id="edit-task-modal"><div class="modal-content"><h2>Edit Task</h2><input type="hidden" id="edit-task-id"><div class="form-group"><label>Client</label><select id="edit-task-client"></select></div><div class="form-group"><label>Type</label><select id="edit-task-type"><option value="daily">Daily</option><option value="weekly">Weekly</option><option value="monthly">Monthly</option></select></div><div class="form-group"><label>Task Description</label><input type="text" id="edit-task-text"></div><div class="form-group"><label>Assign Employee</label><select id="edit-task-employee"><option value="">-- None --</option></select></div><button id="save-edit-task">Save Changes</button><button class="secondary" id="close-edit-task-modal">Cancel</button></div></div>
 <div class="modal" id="prio-modal"><div class="modal-content"><h2 id="prio-modal-title">Add Priority Task</h2><input type="hidden" id="prio-edit-id"><div class="form-group"><label>Client</label><select id="prio-client"></select></div><div class="form-group"><label>Description</label><input type="text" id="prio-text" placeholder="Task description"></div><div class="form-group"><label>Urgency</label><select id="prio-urgency"><option value="normal">Normal</option><option value="important">Important</option><option value="critical">Critical</option><option value="urgent">Urgent</option></select></div><div class="form-group"><label>Due Date</label><input type="date" id="prio-date"></div><div class="form-group"><label>Assign Employee (optional)</label><select id="prio-employee"><option value="">-- None --</option></select></div><button id="save-prio">Save</button><button class="secondary" id="close-prio-modal">Cancel</button></div></div>
@@ -240,7 +265,7 @@
 <script>
   (function() {
     const DEFAULT_API_URL = 'https://script.google.com/macros/s/AKfycbx4G4xudaXgC5WC4Hz2uvENva_eGfsA5zEH-SD8iI3KJwapJzBRVsuH5DprwlA0Fcf1/exec';
-    let data = { clients: [], tasks: [], prompts: [], employees: [], theme: 'blue', webAppUrl: '', lastModified: 0 };
+    let data = { clients: [], tasks: [], prompts: [], employees: [], theme: 'blue', webAppUrl: '', lastModified: 0, lastModifier: '' };
     let currentFilter = { clientId: 'all', employeeId: 'all' };
     let calDate = new Date();
     let selectedCalDate = null;
@@ -251,6 +276,7 @@
 
     function getApiUrl() { return localStorage.getItem('clientManagerApiUrl') || DEFAULT_API_URL; }
 
+    // ---------- DATA LOAD & SAVE ----------
     async function loadAllData() {
       try {
         const res = await fetch(getApiUrl() + '?action=load');
@@ -260,12 +286,13 @@
           data = JSON.parse(text);
           if (data.webAppUrl) localStorage.setItem('clientManagerApiUrl', data.webAppUrl);
           data.lastModified = data.lastModified || 0;
+          data.lastModifier = data.lastModifier || '';
         } else {
-          data = { clients: [], tasks: [], prompts: [], employees: [], theme: 'blue', lastModified: 0 };
+          data = { clients: [], tasks: [], prompts: [], employees: [], theme: 'blue', lastModified: 0, lastModifier: '' };
         }
       } catch (e) {
         console.error('Load failed', e);
-        data = { clients: [], tasks: [], prompts: [], employees: [], theme: 'blue', lastModified: 0 };
+        data = { clients: [], tasks: [], prompts: [], employees: [], theme: 'blue', lastModified: 0, lastModifier: '' };
       }
       if (!data.clients) data.clients = [];
       if (!data.tasks) data.tasks = [];
@@ -278,7 +305,7 @@
 
     async function saveItem(type, item, operation) {
       try {
-        const payload = { type, item, operation };
+        const payload = { type, item, operation, userId: myUserId };
         const res = await fetch(getApiUrl() + '?action=saveItem', {
           method: 'POST',
           body: JSON.stringify(payload)
@@ -286,8 +313,9 @@
         const result = await res.json();
         if (!result.success) {
           alert('Save failed: ' + (result.error || 'Unknown error'));
-        } else if (result.lastModified) {
+        } else {
           data.lastModified = result.lastModified;
+          data.lastModifier = result.lastModifier;
         }
         return result;
       } catch (e) {
@@ -320,11 +348,22 @@
       document.getElementById('update-notification').style.display = 'none';
     }
 
+    // Toast message
+    function showToast(msg) {
+      const toast = document.getElementById('toast');
+      toast.textContent = msg;
+      toast.classList.add('show');
+      setTimeout(() => {
+        toast.classList.remove('show');
+      }, 2500);
+    }
+
     async function checkChanges() {
       try {
         const res = await fetch(getApiUrl() + `?action=checkChanges&lastModified=${data.lastModified}`);
         const result = await res.json();
-        if (result.changed) {
+        // Skip notification if the change was made by the current user
+        if (result.changed && result.lastModifier !== myUserId) {
           showUpdateNotification();
         }
         if (result.activeUsers !== undefined) {
@@ -347,6 +386,7 @@
       hideUpdateNotification();
       await loadAllData();
       refreshCurrentView();
+      showToast('✅ Data refreshed – latest changes applied.');
     }
 
     document.getElementById('refresh-now-btn').addEventListener('click', manualRefresh);
