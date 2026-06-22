@@ -224,12 +224,15 @@
 
 <script>
   (function() {
-    const DEFAULT_API_URL = 'https://script.google.com/macros/s/AKfycbyg9xNUqJNsnHNgUSG_3UOTSLHcp2FKx1F2892KjaUcpUEGyv9Kvypio4xv2cBNtXRr/exec';
+    const DEFAULT_API_URL = 'https://script.google.com/macros/s/AKfycbxXn296w-6u_2uSLyMeumIyYyghMb8VnGcYp5KMpGeECP7k4gz0p9ii5oibCwQrQEG7/exec';
     let data = { clients: [], tasks: [], prompts: [], employees: [], theme: 'blue', webAppUrl: '', lastModified: 0 };
     let currentFilter = { clientId: 'all', employeeId: 'all' };
     let calDate = new Date();
     let selectedCalDate = null;
     let pollingInterval = null;
+    let myUserId = localStorage.getItem('cm_userId') || 'user_' + Math.random().toString(36).substr(2, 9);
+    localStorage.setItem('cm_userId', myUserId);
+    let activeUserCount = 0;
 
     function getApiUrl() { return localStorage.getItem('clientManagerApiUrl') || DEFAULT_API_URL; }
 
@@ -256,11 +259,9 @@
       if (!data.employees) data.employees = [];
       if (!data.theme) data.theme = 'blue';
       data.clients.forEach(c => { if (c.location === undefined) c.location = ''; });
-      // reset lastModified if missing
       if (!data.lastModified) data.lastModified = 0;
     }
 
-    // Granular save: operation = 'add', 'update', 'delete'
     async function saveItem(type, item, operation) {
       try {
         const payload = { type, item, operation };
@@ -269,26 +270,53 @@
           body: JSON.stringify(payload)
         });
         const result = await res.json();
-        if (result.success && result.lastModified) {
+        if (!result.success) {
+          alert('Save failed: ' + (result.error || 'Unknown error'));
+        } else if (result.lastModified) {
           data.lastModified = result.lastModified;
         }
         return result;
       } catch (e) {
-        console.error('Save failed', e);
+        alert('Save error: ' + e.message);
         return { success: false, error: e.message };
       }
     }
 
-    // Polling: check for changes
+    // Heartbeat
+    async function sendHeartbeat() {
+      try {
+        const res = await fetch(getApiUrl() + `?action=heartbeat&userId=${encodeURIComponent(myUserId)}`);
+        const result = await res.json();
+        if (result.success && result.activeUsers !== undefined) {
+          activeUserCount = result.activeUsers;
+          updateActiveUserDisplay();
+        }
+      } catch (e) {
+        console.warn('Heartbeat failed', e);
+      }
+    }
+
+    function updateActiveUserDisplay() {
+      const el = document.getElementById('active-users');
+      if (el) {
+        const count = Math.max(0, activeUserCount - 1); // exclude self? Or show total including self
+        el.textContent = `👥 ${activeUserCount} online`;
+      }
+    }
+
+    // Polling
     async function checkChanges() {
       try {
         const res = await fetch(getApiUrl() + `?action=checkChanges&lastModified=${data.lastModified}`);
         const result = await res.json();
         if (result.changed) {
-          // Reload data silently, then refresh UI
           await loadAllData();
           data.lastModified = result.lastModified;
           refreshCurrentView();
+        }
+        if (result.activeUsers !== undefined) {
+          activeUserCount = result.activeUsers;
+          updateActiveUserDisplay();
         }
       } catch (e) {
         console.warn('Polling error', e);
@@ -297,7 +325,12 @@
 
     function startPolling() {
       if (pollingInterval) clearInterval(pollingInterval);
-      pollingInterval = setInterval(checkChanges, 5000); // every 5 seconds
+      // Send heartbeat immediately, then every 5 sec
+      sendHeartbeat();
+      pollingInterval = setInterval(() => {
+        sendHeartbeat();
+        checkChanges();
+      }, 5000);
     }
 
     function refreshCurrentView() {
@@ -332,7 +365,6 @@
     }
     document.getElementById('theme-select').addEventListener('change', async function() {
       data.theme = this.value;
-      // Save theme via granular save (Settings treated as client type? We'll use a special 'setting' type)
       await saveItem('setting', { theme: data.theme, webAppUrl: getApiUrl() }, 'update');
       applyTheme(data.theme);
     });
@@ -552,7 +584,7 @@
       });
     }
 
-    // ---------- ADD / EDIT TASK, PRIO, EVENT (modified to save granularly) ----------
+    // ---------- ADD / EDIT TASK, PRIO, EVENT ----------
     document.getElementById('add-task-btn').addEventListener('click',()=>{ populateClientSelect(document.getElementById('task-client')); populateEmployeeSelect(document.getElementById('task-employee')); document.getElementById('task-text').value=''; document.getElementById('task-modal').classList.add('active'); });
     document.getElementById('add-prio-btn').addEventListener('click',()=>{ document.getElementById('prio-edit-id').value=''; document.getElementById('prio-modal-title').textContent='Add Priority Task'; document.getElementById('save-prio').textContent='Add'; populateClientSelect(document.getElementById('prio-client')); populateEmployeeSelect(document.getElementById('prio-employee')); document.getElementById('prio-text').value=''; document.getElementById('prio-urgency').value='normal'; document.getElementById('prio-date').value=''; document.getElementById('prio-modal').classList.add('active'); });
     document.getElementById('add-event-btn').addEventListener('click',()=>{ document.getElementById('event-edit-id').value=''; document.getElementById('event-modal-title').textContent='Add Event'; document.getElementById('save-event').textContent='Add'; populateClientSelect(document.getElementById('event-client')); populateEmployeeSelect(document.getElementById('event-employee')); document.getElementById('event-text').value=''; document.getElementById('event-date').value=''; document.getElementById('event-time').value=''; document.getElementById('event-type').value='meeting'; document.getElementById('event-custom-type').value=''; document.getElementById('event-custom-type-group').style.display='none'; document.getElementById('event-modal').classList.add('active'); });
@@ -611,7 +643,7 @@
     document.getElementById('close-prio-modal').addEventListener('click',()=>document.getElementById('prio-modal').classList.remove('active'));
     document.getElementById('close-event-modal').addEventListener('click',()=>document.getElementById('event-modal').classList.remove('active'));
 
-    // ---------- CLIENTS (granular save) ----------
+    // ---------- CLIENTS ----------
     function renderClients() {
       const cont=document.getElementById('clients-list');
       if(!data.clients.length){ cont.innerHTML='<p>No clients yet.</p>'; return; }
@@ -678,7 +710,7 @@
     document.getElementById('add-client-btn').addEventListener('click',()=>openClientModal());
     document.getElementById('close-client-modal').addEventListener('click',()=>document.getElementById('client-modal').classList.remove('active'));
 
-    // ---------- AI PROMPTS (granular save) ----------
+    // ---------- AI PROMPTS ----------
     function renderPromptTab() {
       const cont=document.getElementById('prompts-clients-grid');
       if(!data.clients.length){ cont.innerHTML='<p>No clients yet.</p>'; return; }
@@ -838,7 +870,6 @@
     // ---------- INIT ----------
     (async function init() {
       await loadAllData();
-      // ensure lastModified is numeric
       if (!data.lastModified) data.lastModified = 0;
       const today = getTodayDateStr();
       data.tasks.forEach(task => {
