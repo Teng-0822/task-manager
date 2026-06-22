@@ -47,7 +47,6 @@
       --primary: #6366f1; --primary-light: #312e81;
     }
     .app { width:100%; max-width:1400px; background:var(--surface); border-radius:var(--radius); box-shadow:var(--shadow-md); overflow:hidden; border:1px solid var(--border); }
-    /* Notification bar */
     #update-notification {
       display: none;
       background: #fef3c7;
@@ -151,7 +150,6 @@
 </head>
 <body>
 <div class="app">
-  <!-- Notification bar (hidden by default) -->
   <div id="update-notification">
     <span>🔄 Your co-worker updated the list.</span>
     <button id="refresh-now-btn" style="background:#f59e0b; color:white; border:none; border-radius:6px; padding:6px 12px; cursor:pointer; font-weight:500;">↻ Refresh now</button>
@@ -226,7 +224,7 @@
   </div>
 </div>
 
-<!-- Modals -->
+<!-- Modals (unchanged) -->
 <div class="modal" id="task-modal"><div class="modal-content"><h2>Add Task</h2><div class="form-group"><label>Client</label><select id="task-client"></select></div><div class="form-group"><label>Type</label><select id="task-type"><option value="daily">Daily</option><option value="weekly">Weekly</option><option value="monthly">Monthly</option></select></div><div class="form-group"><label>Task Description</label><input type="text" id="task-text" placeholder="e.g., Check emails"></div><div class="form-group"><label>Assign Employee (optional)</label><select id="task-employee"><option value="">-- None --</option></select></div><button id="save-task">Add</button><button class="secondary" id="close-task-modal">Cancel</button></div></div>
 <div class="modal" id="edit-task-modal"><div class="modal-content"><h2>Edit Task</h2><input type="hidden" id="edit-task-id"><div class="form-group"><label>Client</label><select id="edit-task-client"></select></div><div class="form-group"><label>Type</label><select id="edit-task-type"><option value="daily">Daily</option><option value="weekly">Weekly</option><option value="monthly">Monthly</option></select></div><div class="form-group"><label>Task Description</label><input type="text" id="edit-task-text"></div><div class="form-group"><label>Assign Employee</label><select id="edit-task-employee"><option value="">-- None --</option></select></div><button id="save-edit-task">Save Changes</button><button class="secondary" id="close-edit-task-modal">Cancel</button></div></div>
 <div class="modal" id="prio-modal"><div class="modal-content"><h2 id="prio-modal-title">Add Priority Task</h2><input type="hidden" id="prio-edit-id"><div class="form-group"><label>Client</label><select id="prio-client"></select></div><div class="form-group"><label>Description</label><input type="text" id="prio-text" placeholder="Task description"></div><div class="form-group"><label>Urgency</label><select id="prio-urgency"><option value="normal">Normal</option><option value="important">Important</option><option value="critical">Critical</option><option value="urgent">Urgent</option></select></div><div class="form-group"><label>Due Date</label><input type="date" id="prio-date"></div><div class="form-group"><label>Assign Employee (optional)</label><select id="prio-employee"><option value="">-- None --</option></select></div><button id="save-prio">Save</button><button class="secondary" id="close-prio-modal">Cancel</button></div></div>
@@ -240,7 +238,6 @@
 
 <script>
   (function() {
-    // ⚠️ Use your latest web app URL here
     const DEFAULT_API_URL = 'https://script.google.com/macros/s/AKfycbx8a_7rnDCV4loFv65wdh2JyNQl8IHx5b-NqVsAsIOA9slvqiRGEMREIqaIBQO9gu8l/exec';
     let data = { clients: [], tasks: [], prompts: [], employees: [], theme: 'blue', webAppUrl: '', lastModified: 0 };
     let currentFilter = { clientId: 'all', employeeId: 'all' };
@@ -253,7 +250,6 @@
 
     function getApiUrl() { return localStorage.getItem('clientManagerApiUrl') || DEFAULT_API_URL; }
 
-    // ---------- DATA LOAD & SAVE ----------
     async function loadAllData() {
       try {
         const res = await fetch(getApiUrl() + '?action=load');
@@ -299,7 +295,6 @@
       }
     }
 
-    // Heartbeat
     async function sendHeartbeat() {
       try {
         const res = await fetch(getApiUrl() + `?action=heartbeat&userId=${encodeURIComponent(myUserId)}`);
@@ -316,7 +311,6 @@
       if (el) el.textContent = `👥 ${activeUserCount} online`;
     }
 
-    // Show refresh notification bar
     function showUpdateNotification() {
       document.getElementById('update-notification').style.display = 'flex';
     }
@@ -325,7 +319,6 @@
       document.getElementById('update-notification').style.display = 'none';
     }
 
-    // Polling – only shows notification, no auto refresh
     async function checkChanges() {
       try {
         const res = await fetch(getApiUrl() + `?action=checkChanges&lastModified=${data.lastModified}`);
@@ -349,7 +342,6 @@
       }, 5000);
     }
 
-    // Manual refresh triggered by notification button
     async function manualRefresh() {
       hideUpdateNotification();
       await loadAllData();
