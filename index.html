@@ -173,6 +173,25 @@
     }
     .toast.show { opacity:1; }
 
+    /* Saving toast */
+    #saving-toast {
+      position:fixed; bottom:20px; left:50%; transform:translateX(-50%);
+      background: var(--primary); color:white;
+      padding:10px 24px; border-radius:30px;
+      font-weight:500; box-shadow:0 8px 20px rgba(0,0,0,0.15);
+      z-index:210; opacity:0; transition: opacity 0.3s;
+      pointer-events:none;
+      display:flex; align-items:center; gap:8px;
+    }
+    #saving-toast.show { opacity:1; }
+    #saving-toast .mini-spinner {
+      width:16px; height:16px;
+      border:2px solid rgba(255,255,255,0.4);
+      border-top:2px solid white;
+      border-radius:50%;
+      animation: spin 0.6s linear infinite;
+    }
+
     /* Update notification */
     #update-notification {
       display: none;
@@ -441,18 +460,45 @@
     }
     .client-card-v2 .card-body { padding:18px 22px; }
 
+    /* Redesigned AI Prompt cards */
     .prompt-client-card {
       background: var(--card-bg);
       backdrop-filter: var(--blur);
       border-radius: var(--radius); overflow:hidden;
       box-shadow:var(--shadow);
       border:1px solid var(--glass-border);
+      margin-bottom: 20px;
     }
+    .prompt-client-card .prompt-header {
+      padding: 18px 24px;
+      color: white;
+      font-weight: 700;
+      font-size: 22px;
+      letter-spacing: 0.5px;
+      text-shadow: 0 2px 4px rgba(0,0,0,0.2);
+      backdrop-filter: blur(5px);
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .prompt-client-card .prompt-header .client-icon {
+      font-size: 28px;
+      filter: drop-shadow(0 2px 2px rgba(0,0,0,0.2));
+    }
+    .prompt-client-card .prompt-body { padding:18px 24px; }
     .prompt-link {
       display:flex; align-items:center; justify-content:space-between;
-      padding:8px 12px; margin:6px 0; border-radius: 14px;
-      background: var(--input-bg); color:var(--text); text-decoration:none; font-size:14px;
+      padding:10px 14px; margin:6px 0; border-radius: 14px;
+      background: var(--input-bg); backdrop-filter: var(--blur);
+      color:var(--text); text-decoration:none; font-size:14px;
+      transition: background var(--transition);
     }
+    .prompt-link:hover { background: var(--glass-bg); }
+    .prompt-link-text { flex:1; overflow:hidden; text-overflow:ellipsis; }
+    .prompt-link-actions { display:flex; gap:6px; margin-left:8px; }
+    .prompt-link-actions button { background:none; border:none; color:var(--text-secondary); cursor:pointer; padding:4px; border-radius:6px; }
+    .prompt-link-actions button:hover { background: var(--card-bg); color:var(--text); }
+    .prompt-actions { display:flex; gap:8px; margin-top:12px; }
 
     .settings-tabs { display:flex; gap:12px; margin-bottom:20px; border-bottom:1px solid var(--glass-border); padding-bottom:12px; }
     .settings-tab-btn {
@@ -487,6 +533,7 @@
 <body class="design-glass">
 <div class="app">
   <div id="toast" class="toast"></div>
+  <div id="saving-toast"><span class="mini-spinner"></span> Saving...</div>
   <div id="loading-overlay">
     <div class="loading-box">
       <div class="spinner"></div>
@@ -567,7 +614,7 @@
   </div>
 </div>
 
-<!-- Modals (unchanged except employee color picker already uses color-dot) -->
+<!-- Modals -->
 <div class="modal" id="task-modal"><div class="modal-content"><h2>Add Task</h2><div class="form-group"><label>Client</label><select id="task-client"></select></div><div class="form-group"><label>Type</label><select id="task-type"><option value="daily">Daily</option><option value="weekly">Weekly</option><option value="monthly">Monthly</option></select></div><div class="form-group"><label>Task Description</label><input type="text" id="task-text" placeholder="e.g., Check emails"></div><div class="form-group"><label>Assign Employee (optional)</label><select id="task-employee"><option value="">-- None --</option></select></div><button id="save-task">Add</button><button class="secondary" id="close-task-modal">Cancel</button></div></div>
 <div class="modal" id="edit-task-modal"><div class="modal-content"><h2>Edit Task</h2><input type="hidden" id="edit-task-id"><div class="form-group"><label>Client</label><select id="edit-task-client"></select></div><div class="form-group"><label>Type</label><select id="edit-task-type"><option value="daily">Daily</option><option value="weekly">Weekly</option><option value="monthly">Monthly</option></select></div><div class="form-group"><label>Task Description</label><input type="text" id="edit-task-text"></div><div class="form-group"><label>Assign Employee</label><select id="edit-task-employee"><option value="">-- None --</option></select></div><button id="save-edit-task">Save Changes</button><button class="secondary" id="close-edit-task-modal">Cancel</button></div></div>
 <div class="modal" id="prio-modal"><div class="modal-content"><h2 id="prio-modal-title">Add Priority Task</h2><input type="hidden" id="prio-edit-id"><div class="form-group"><label>Client</label><select id="prio-client"></select></div><div class="form-group"><label>Description</label><input type="text" id="prio-text" placeholder="Task description"></div><div class="form-group"><label>Urgency</label><select id="prio-urgency"><option value="normal">Normal</option><option value="important">Important</option><option value="critical">Critical</option><option value="urgent">Urgent</option></select></div><div class="form-group"><label>Due Date</label><input type="date" id="prio-date"></div><div class="form-group"><label>Assign Employee (optional)</label><select id="prio-employee"><option value="">-- None --</option></select></div><button id="save-prio">Save</button><button class="secondary" id="close-prio-modal">Cancel</button></div></div>
@@ -581,8 +628,8 @@
 
 <script>
   (function() {
-    // ⚠️ IMPORTANT: Replace this with your latest web app URL after deploying the updated script!
-    const DEFAULT_API_URL = 'https://script.google.com/macros/s/PASTE_YOUR_DEPLOYMENT_URL_HERE/exec';
+    // ⚠️ REPLACE THIS WITH YOUR ACTUAL WEB APP URL ⚠️
+    const DEFAULT_API_URL = 'https://script.google.com/macros/s/YOUR_DEPLOYMENT_URL/exec';
     
     let data = { clients:[], tasks:[], prompts:[], employees:[], design:'glass', webAppUrl:'', lastModified:0, lastModifier:'' };
     let currentFilter = { clientId:'all', employeeId:'all' };
@@ -595,6 +642,10 @@
     let isRefreshing = false;
 
     function getApiUrl() { return localStorage.getItem('clientManagerApiUrl') || DEFAULT_API_URL; }
+
+    // Saving indicator
+    function showSaving() { document.getElementById('saving-toast').classList.add('show'); }
+    function hideSaving() { document.getElementById('saving-toast').classList.remove('show'); }
 
     async function loadAllData() {
       try {
@@ -615,6 +666,7 @@
     }
 
     async function saveItem(type, item, operation) {
+      showSaving();
       try {
         const payload = { type, item, operation, userId: myUserId };
         const res = await fetch(getApiUrl() + '?action=saveItem', {
@@ -625,6 +677,7 @@
         else { data.lastModified = result.lastModified; data.lastModifier = result.lastModifier; }
         return result;
       } catch(e) { alert('Save error: ' + e.message); return {success:false}; }
+      finally { hideSaving(); }
     }
 
     async function sendHeartbeat() {
@@ -1076,124 +1129,228 @@
     document.getElementById('add-client-btn').addEventListener('click',()=>openClientModal());
     document.getElementById('close-client-modal').addEventListener('click',()=>document.getElementById('client-modal').classList.remove('active'));
 
-    // Prompts
+    // ---------- AI PROMPTS (redesigned) ----------
     function renderPromptTab() {
-      const cont=document.getElementById('prompts-clients-grid');
-      if(!data.clients.length){ cont.innerHTML='<p>No clients yet.</p>'; return; }
-      cont.innerHTML=data.clients.map(c=>{
-        const accent=c.colors?.[0]||'#3b82f6';
-        const prompts=data.prompts.filter(p=>p.clientId===c.id&&p.type==='text');
-        return `<div class="prompt-client-card"><div class="prompt-header" style="background:linear-gradient(135deg,${accent},${adjustColor(accent,-20)});">${c.name}</div><div class="prompt-body">${prompts.length?'': '<p style="color:var(--text-secondary);font-size:13px;">No text prompts saved.</p>'}${prompts.map(p=>`<div class="prompt-link"><a href="${p.link}" target="_blank" class="prompt-link-text">📄 ${p.title}</a><div class="prompt-link-actions"><button class="edit-prompt-btn" data-id="${p.id}" title="Edit">✏️</button><button class="delete-prompt-btn" data-id="${p.id}" title="Delete">🗑️</button></div></div>`).join('')}<div class="prompt-actions"><button class="add-text-prompt-btn" data-client-id="${c.id}">➕ Text Only</button><button class="add-image-prompt-btn" data-client-id="${c.id}">🖼️ Image Generator</button></div></div></div>`;
+      const cont = document.getElementById('prompts-clients-grid');
+      if (!data.clients.length) { cont.innerHTML = '<p>No clients yet.</p>'; return; }
+
+      cont.innerHTML = data.clients.map(c => {
+        const accent = c.colors?.[0] || 'var(--primary)';
+        const textPrompts = data.prompts.filter(p => p.clientId === c.id && p.type === 'text');
+        const imagePrompts = data.prompts.filter(p => p.clientId === c.id && p.type === 'image');
+
+        return `
+          <div class="prompt-client-card">
+            <div class="prompt-header" style="background: linear-gradient(135deg, ${accent}, ${adjustColor(accent, -20)});">
+              <span class="client-icon">📁</span> ${c.name}
+            </div>
+            <div class="prompt-body">
+              <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+                <span style="font-weight:600; font-size:14px;">📄 Text Prompts (${textPrompts.length})</span>
+                <button class="secondary" style="padding:6px 14px; font-size:12px;" onclick="openPromptModal('${c.id}','text')">+ Add Text</button>
+              </div>
+              ${textPrompts.length ? textPrompts.map(p => `
+                <div class="prompt-link">
+                  <a href="${p.link}" target="_blank" class="prompt-link-text">${p.title}</a>
+                  <div class="prompt-link-actions">
+                    <button class="edit-prompt-btn" data-id="${p.id}" title="Edit">✏️</button>
+                    <button class="delete-prompt-btn" data-id="${p.id}" title="Delete">🗑️</button>
+                  </div>
+                </div>`).join('') : '<p style="color:var(--text-secondary); font-size:13px;">No text prompts saved.</p>'}
+              <div style="margin-top:18px; display:flex; justify-content:space-between; align-items:center;">
+                <span style="font-weight:600; font-size:14px;">🖼️ Image Prompts (${imagePrompts.length})</span>
+                <button class="secondary" style="padding:6px 14px; font-size:12px;" onclick="openPromptModal('${c.id}','image')">+ Add Image</button>
+              </div>
+              ${imagePrompts.length ? '<p style="color:var(--text-secondary); font-size:13px; margin-top:8px;">Image prompts cannot be displayed inline – they are generated via the prompt builder.</p>' : ''}
+            </div>
+          </div>
+        `;
       }).join('');
-      cont.querySelectorAll('.edit-prompt-btn').forEach(b=>b.addEventListener('click',e=>{ e.stopPropagation(); const p=data.prompts.find(p=>p.id==b.dataset.id); if(p) openEditPromptModal(p); }));
-      cont.querySelectorAll('.delete-prompt-btn').forEach(b=>b.addEventListener('click',e=>{ e.stopPropagation(); showConfirm('Delete this prompt?', async ()=>{ await saveItem('prompt', { id: b.dataset.id }, 'delete'); data.prompts=data.prompts.filter(p=>p.id!=b.dataset.id); renderPromptTab(); }); }));
-      cont.querySelectorAll('.add-text-prompt-btn').forEach(b=>b.addEventListener('click',()=>openPromptModal(b.dataset.clientId,'text')));
-      cont.querySelectorAll('.add-image-prompt-btn').forEach(b=>b.addEventListener('click',()=>openPromptModal(b.dataset.clientId,'image')));
+
+      // Re-attach event listeners for edit/delete buttons
+      cont.querySelectorAll('.edit-prompt-btn').forEach(b => b.addEventListener('click', e => {
+        e.stopPropagation();
+        const p = data.prompts.find(p => p.id == b.dataset.id);
+        if (p) openEditPromptModal(p);
+      }));
+      cont.querySelectorAll('.delete-prompt-btn').forEach(b => b.addEventListener('click', e => {
+        e.stopPropagation();
+        showConfirm('Delete this prompt?', async () => {
+          await saveItem('prompt', { id: b.dataset.id }, 'delete');
+          data.prompts = data.prompts.filter(p => p.id != b.dataset.id);
+          renderPromptTab();
+        });
+      }));
+      // Re-bind the add buttons
+      cont.querySelectorAll('.add-text-prompt-btn, .add-image-prompt-btn').forEach(b => {
+        b.addEventListener('click', e => {
+          const clientId = b.dataset.clientId;
+          const type = b.classList.contains('add-image-prompt-btn') ? 'image' : 'text';
+          openPromptModal(clientId, type);
+        });
+      });
     }
-    function openPromptModal(clientId,type,prompt=null){
-      document.getElementById('edit-prompt-id').value=prompt?prompt.id:'';
-      document.getElementById('prompt-client-id-hidden').value=clientId;
-      if(prompt){
-        document.getElementById('prompt-modal-title').textContent='Edit Text Prompt';
-        document.getElementById('prompt-type-group').style.display='none';
-        document.getElementById('prompt-type').value='text';
-        document.getElementById('text-fields').style.display='block';
-        document.getElementById('image-fields').style.display='none';
-        document.getElementById('save-prompt-btn').textContent='Update';
-        document.getElementById('prompt-title').value=prompt.title;
-        document.getElementById('prompt-link').value=prompt.link;
+
+    function openPromptModal(clientId, type, prompt = null) {
+      document.getElementById('edit-prompt-id').value = prompt ? prompt.id : '';
+      document.getElementById('prompt-client-id-hidden').value = clientId;
+      if (prompt) {
+        document.getElementById('prompt-modal-title').textContent = 'Edit Text Prompt';
+        document.getElementById('prompt-type-group').style.display = 'none';
+        document.getElementById('prompt-type').value = 'text';
+        document.getElementById('text-fields').style.display = 'block';
+        document.getElementById('image-fields').style.display = 'none';
+        document.getElementById('save-prompt-btn').textContent = 'Update';
+        document.getElementById('prompt-title').value = prompt.title;
+        document.getElementById('prompt-link').value = prompt.link;
       } else {
-        document.getElementById('prompt-modal-title').textContent='Add Prompt';
-        document.getElementById('prompt-type-group').style.display='block';
-        document.getElementById('prompt-type').value=type;
-        document.getElementById('text-fields').style.display=type==='text'?'block':'none';
-        document.getElementById('image-fields').style.display=type==='image'?'block':'none';
-        document.getElementById('save-prompt-btn').textContent=type==='image'?'Generate':'Save';
-        document.getElementById('prompt-title').value='';
-        document.getElementById('prompt-link').value='';
-        document.getElementById('prompt-size').value='';
-        document.getElementById('prompt-topic').value='';
-        document.getElementById('prompt-caption').value='';
+        document.getElementById('prompt-modal-title').textContent = type === 'image' ? 'Add Image Prompt' : 'Add Text Prompt';
+        document.getElementById('prompt-type-group').style.display = 'block';
+        document.getElementById('prompt-type').value = type;
+        document.getElementById('text-fields').style.display = type === 'text' ? 'block' : 'none';
+        document.getElementById('image-fields').style.display = type === 'image' ? 'block' : 'none';
+        document.getElementById('save-prompt-btn').textContent = type === 'image' ? 'Generate' : 'Save';
+        document.getElementById('prompt-title').value = '';
+        document.getElementById('prompt-link').value = '';
+        document.getElementById('prompt-size').value = '';
+        document.getElementById('prompt-topic').value = '';
+        document.getElementById('prompt-caption').value = '';
       }
       document.getElementById('prompt-modal').classList.add('active');
     }
-    function openEditPromptModal(p){ openPromptModal(p.clientId,'text',p); }
-    document.getElementById('close-prompt-modal').addEventListener('click',()=>{ document.getElementById('prompt-modal').classList.remove('active'); document.getElementById('edit-prompt-id').value=''; });
-    document.getElementById('save-prompt-btn').addEventListener('click', async ()=>{
-      const editId=document.getElementById('edit-prompt-id').value, clientId=document.getElementById('prompt-client-id-hidden').value, type=document.getElementById('prompt-type').value;
-      if(editId){
-        const p=data.prompts.find(p=>p.id==editId);
-        if(!p) return;
-        const title=document.getElementById('prompt-title').value.trim(), link=document.getElementById('prompt-link').value.trim();
-        if(!title||!link) return alert('Title and Link required');
-        p.title=title; p.link=link;
+
+    function openEditPromptModal(p) { openPromptModal(p.clientId, 'text', p); }
+
+    document.getElementById('close-prompt-modal').addEventListener('click', () => {
+      document.getElementById('prompt-modal').classList.remove('active');
+      document.getElementById('edit-prompt-id').value = '';
+    });
+
+    document.getElementById('save-prompt-btn').addEventListener('click', async () => {
+      const editId = document.getElementById('edit-prompt-id').value;
+      const clientId = document.getElementById('prompt-client-id-hidden').value;
+      const type = document.getElementById('prompt-type').value;
+
+      if (editId) {
+        const p = data.prompts.find(p => p.id == editId);
+        if (!p) return;
+        const title = document.getElementById('prompt-title').value.trim();
+        const link = document.getElementById('prompt-link').value.trim();
+        if (!title || !link) return alert('Title and Link required');
+        p.title = title;
+        p.link = link;
         await saveItem('prompt', p, 'update');
         document.getElementById('prompt-modal').classList.remove('active');
-        document.getElementById('edit-prompt-id').value='';
+        document.getElementById('edit-prompt-id').value = '';
         renderPromptTab();
       } else {
-        if(type==='text'){
-          const title=document.getElementById('prompt-title').value.trim(), link=document.getElementById('prompt-link').value.trim();
-          if(!title||!link) return alert('Title and Link required');
-          const prompt = { id:Date.now().toString(), clientId, type, title, link };
+        if (type === 'text') {
+          const title = document.getElementById('prompt-title').value.trim();
+          const link = document.getElementById('prompt-link').value.trim();
+          if (!title || !link) return alert('Title and Link required');
+          const prompt = { id: Date.now().toString(), clientId, type, title, link };
           await saveItem('prompt', prompt, 'add');
           data.prompts.push(prompt);
           document.getElementById('prompt-modal').classList.remove('active');
           renderPromptTab();
         } else {
-          const size=document.getElementById('prompt-size').value.trim()||'1:1', topic=document.getElementById('prompt-topic').value.trim(), caption=document.getElementById('prompt-caption').value.trim();
-          if(!topic&&!caption) return alert('At least Topic or Caption must be filled');
-          const client=data.clients.find(c=>c.id===clientId);
-          const colors=client?.colors.join(', ')||'none', fonts=client?.fonts.join(', ')||'none';
-          let gen=`Image size: ${size}\nColor palette: ${colors}\nFonts: ${fonts}`;
-          if(topic) gen+=`\nTopic: ${topic}`;
-          if(caption) gen+=`\nCaption: ${caption}`;
-          document.getElementById('generated-prompt').value=gen;
+          const size = document.getElementById('prompt-size').value.trim() || '1:1';
+          const topic = document.getElementById('prompt-topic').value.trim();
+          const caption = document.getElementById('prompt-caption').value.trim();
+          if (!topic && !caption) return alert('At least Topic or Caption must be filled');
+          const client = data.clients.find(c => c.id === clientId);
+          const colors = client?.colors.join(', ') || 'none';
+          const fonts = client?.fonts.join(', ') || 'none';
+          let gen = `Image size: ${size}\nColor palette: ${colors}\nFonts: ${fonts}`;
+          if (topic) gen += `\nTopic: ${topic}`;
+          if (caption) gen += `\nCaption: ${caption}`;
+          document.getElementById('generated-prompt').value = gen;
           document.getElementById('generate-modal').classList.add('active');
           document.getElementById('prompt-modal').classList.remove('active');
-          document.getElementById('prompt-size').value=''; document.getElementById('prompt-topic').value=''; document.getElementById('prompt-caption').value='';
+          document.getElementById('prompt-size').value = '';
+          document.getElementById('prompt-topic').value = '';
+          document.getElementById('prompt-caption').value = '';
         }
       }
     });
-    document.getElementById('close-generate-modal').addEventListener('click',()=>document.getElementById('generate-modal').classList.remove('active'));
-    document.getElementById('copy-prompt').addEventListener('click',()=>{ const ta=document.getElementById('generated-prompt'); ta.select(); document.execCommand('copy'); alert('Copied!'); });
-    function populateClientSelect(sel,selId=null){ sel.innerHTML='<option value="">-- Choose --</option>'+data.clients.map(c=>`<option value="${c.id}" ${c.id===selId?'selected':''}>${c.name}</option>`).join(''); }
+
+    document.getElementById('close-generate-modal').addEventListener('click', () => {
+      document.getElementById('generate-modal').classList.remove('active');
+    });
+
+    document.getElementById('copy-prompt').addEventListener('click', () => {
+      const ta = document.getElementById('generated-prompt');
+      ta.select();
+      document.execCommand('copy');
+      alert('Copied!');
+    });
+
+    function populateClientSelect(sel, selId = null) {
+      sel.innerHTML = '<option value="">-- Choose --</option>' + data.clients.map(c => `<option value="${c.id}" ${c.id === selId ? 'selected' : ''}>${c.name}</option>`).join('');
+    }
 
     // Employees in settings
-    function renderSettingsEmployees(){
-      const list=document.getElementById('employees-list');
-      if(!data.employees.length){ list.innerHTML='<p>No employees added.</p>'; return; }
-      list.innerHTML=data.employees.map(e=>`<div class="employee-item"><span class="color-dot" style="background:${e.color};" title="${e.color}"></span><span style="flex:1;">${e.name}</span><button class="secondary edit-employee-btn" data-id="${e.id}">✎</button><button class="secondary delete-employee-btn" data-id="${e.id}">✕</button></div>`).join('');
-      document.querySelectorAll('.edit-employee-btn').forEach(b=>b.addEventListener('click',()=>{ const e=data.employees.find(e=>e.id==b.dataset.id); if(e) openEmployeeModal(e); }));
-      document.querySelectorAll('.delete-employee-btn').forEach(b=>b.addEventListener('click',()=>{ showConfirm('Delete this employee?', async ()=>{ await saveItem('employee', { id: b.dataset.id }, 'delete'); data.employees=data.employees.filter(e=>e.id!=b.dataset.id); renderSettingsEmployees(); renderDashboard(); }); }));
+    function renderSettingsEmployees() {
+      const list = document.getElementById('employees-list');
+      if (!data.employees.length) { list.innerHTML = '<p>No employees added.</p>'; return; }
+      list.innerHTML = data.employees.map(e => `
+        <div class="employee-item">
+          <span class="color-dot" style="background:${e.color};" title="${e.color}"></span>
+          <span style="flex:1;">${e.name}</span>
+          <button class="secondary edit-employee-btn" data-id="${e.id}">✎</button>
+          <button class="secondary delete-employee-btn" data-id="${e.id}">✕</button>
+        </div>`).join('');
+      document.querySelectorAll('.edit-employee-btn').forEach(b => b.addEventListener('click', () => {
+        const e = data.employees.find(e => e.id == b.dataset.id);
+        if (e) openEmployeeModal(e);
+      }));
+      document.querySelectorAll('.delete-employee-btn').forEach(b => b.addEventListener('click', () => {
+        showConfirm('Delete this employee?', async () => {
+          await saveItem('employee', { id: b.dataset.id }, 'delete');
+          data.employees = data.employees.filter(e => e.id != b.dataset.id);
+          renderSettingsEmployees();
+          renderDashboard();
+        });
+      }));
     }
-    function openEmployeeModal(emp=null){
-      document.getElementById('edit-employee-id').value=emp?emp.id:'';
-      document.getElementById('employee-modal-title').textContent=emp?'Edit Employee':'Add Employee';
-      document.getElementById('employee-name').value=emp?emp.name:'';
-      const color=emp?emp.color:'#3b82f6';
-      document.getElementById('employee-color-picker').value=color;
-      document.getElementById('employee-color-hex').value=color;
+
+    function openEmployeeModal(emp = null) {
+      document.getElementById('edit-employee-id').value = emp ? emp.id : '';
+      document.getElementById('employee-modal-title').textContent = emp ? 'Edit Employee' : 'Add Employee';
+      document.getElementById('employee-name').value = emp ? emp.name : '';
+      const color = emp ? emp.color : '#3b82f6';
+      document.getElementById('employee-color-picker').value = color;
+      document.getElementById('employee-color-hex').value = color;
       document.getElementById('employee-modal').classList.add('active');
     }
-    document.getElementById('employee-color-picker').addEventListener('input',function(){ document.getElementById('employee-color-hex').value=this.value; });
-    document.getElementById('employee-color-hex').addEventListener('input',function(){ const v=this.value.trim(); if(/^#[0-9a-fA-F]{6}$/.test(v)) document.getElementById('employee-color-picker').value=v; });
-    document.getElementById('add-employee-btn').addEventListener('click',()=>openEmployeeModal());
-    document.getElementById('close-employee-modal').addEventListener('click',()=>document.getElementById('employee-modal').classList.remove('active'));
-    document.getElementById('save-employee').addEventListener('click', async ()=>{
-      const id=document.getElementById('edit-employee-id').value, name=document.getElementById('employee-name').value.trim(), color=document.getElementById('employee-color-hex').value.trim();
-      if(!name) return alert('Name is required');
-      if(!/^#[0-9a-fA-F]{6}$/.test(color)) return alert('Please enter a valid hex color');
-      const employee = { id: id||Date.now().toString(), name, color };
+
+    document.getElementById('employee-color-picker').addEventListener('input', function () {
+      document.getElementById('employee-color-hex').value = this.value;
+    });
+    document.getElementById('employee-color-hex').addEventListener('input', function () {
+      const v = this.value.trim();
+      if (/^#[0-9a-fA-F]{6}$/.test(v)) document.getElementById('employee-color-picker').value = v;
+    });
+    document.getElementById('add-employee-btn').addEventListener('click', () => openEmployeeModal());
+    document.getElementById('close-employee-modal').addEventListener('click', () => document.getElementById('employee-modal').classList.remove('active'));
+    document.getElementById('save-employee').addEventListener('click', async () => {
+      const id = document.getElementById('edit-employee-id').value;
+      const name = document.getElementById('employee-name').value.trim();
+      const color = document.getElementById('employee-color-hex').value.trim();
+      if (!name) return alert('Name is required');
+      if (!/^#[0-9a-fA-F]{6}$/.test(color)) return alert('Please enter a valid hex color');
+      const employee = { id: id || Date.now().toString(), name, color };
       const op = id ? 'update' : 'add';
       await saveItem('employee', employee, op);
-      if(op==='add') data.employees.push(employee); else data.employees = data.employees.map(e=>e.id===employee.id?employee:e);
+      if (op === 'add') data.employees.push(employee);
+      else data.employees = data.employees.map(e => e.id === employee.id ? employee : e);
       document.getElementById('employee-modal').classList.remove('active');
       renderSettingsEmployees();
       populateAllEmployeeSelects();
       renderDashboard();
     });
-    function populateAllEmployeeSelects(){
+
+    function populateAllEmployeeSelects() {
       populateEmployeeSelect(document.getElementById('task-employee'));
       populateEmployeeSelect(document.getElementById('edit-task-employee'));
       populateEmployeeSelect(document.getElementById('prio-employee'));
@@ -1201,7 +1358,7 @@
     }
 
     // Settings modal
-    document.getElementById('open-settings').addEventListener('click', ()=>{
+    document.getElementById('open-settings').addEventListener('click', () => {
       document.getElementById('settings-modal').classList.add('active');
       renderSettingsEmployees();
       applyDesign(data.design);
@@ -1209,23 +1366,23 @@
       document.querySelector('.settings-tab-btn[data-setting="design"]').classList.add('active');
       document.querySelector('.settings-tab-btn[data-setting="employees"]').classList.remove('active');
       document.querySelector('.settings-tab-btn[data-setting="api"]').classList.remove('active');
-      document.getElementById('design-panel').style.display='block';
-      document.getElementById('employees-panel').style.display='none';
-      document.getElementById('api-panel').style.display='none';
+      document.getElementById('design-panel').style.display = 'block';
+      document.getElementById('employees-panel').style.display = 'none';
+      document.getElementById('api-panel').style.display = 'none';
     });
-    document.getElementById('close-settings').addEventListener('click',()=>document.getElementById('settings-modal').classList.remove('active'));
+    document.getElementById('close-settings').addEventListener('click', () => document.getElementById('settings-modal').classList.remove('active'));
 
     // Design change handler
-    document.getElementById('design-select').addEventListener('change', async function() {
+    document.getElementById('design-select').addEventListener('change', async function () {
       data.design = this.value;
       await saveItem('setting', { design: data.design, webAppUrl: getApiUrl() }, 'update');
       applyDesign(data.design);
     });
 
     // API URL save
-    document.getElementById('save-api-url').addEventListener('click', async ()=>{
+    document.getElementById('save-api-url').addEventListener('click', async () => {
       const url = document.getElementById('api-url').value.trim();
-      if(url){
+      if (url) {
         localStorage.setItem('clientManagerApiUrl', url);
         data.webAppUrl = url;
         await saveItem('setting', { design: data.design, webAppUrl: url }, 'update');
@@ -1234,20 +1391,20 @@
     });
 
     // Settings tabs
-    document.querySelectorAll('.settings-tab-btn').forEach(btn=>btn.addEventListener('click',()=>{
-      document.querySelectorAll('.settings-tab-btn').forEach(b=>b.classList.remove('active'));
+    document.querySelectorAll('.settings-tab-btn').forEach(btn => btn.addEventListener('click', () => {
+      document.querySelectorAll('.settings-tab-btn').forEach(b => b.classList.remove('active'));
       btn.classList.add('active');
       const setting = btn.dataset.setting;
-      document.getElementById('design-panel').style.display = setting==='design'?'block':'none';
-      document.getElementById('employees-panel').style.display = setting==='employees'?'block':'none';
-      document.getElementById('api-panel').style.display = setting==='api'?'block':'none';
-      if(setting==='employees') renderSettingsEmployees();
+      document.getElementById('design-panel').style.display = setting === 'design' ? 'block' : 'none';
+      document.getElementById('employees-panel').style.display = setting === 'employees' ? 'block' : 'none';
+      document.getElementById('api-panel').style.display = setting === 'api' ? 'block' : 'none';
+      if (setting === 'employees') renderSettingsEmployees();
     }));
 
     // Initial load
     (async function init() {
       await loadAllData();
-      applyDesign(data.design);   // <-- this loads the saved design
+      applyDesign(data.design);
       const today = getTodayDateStr();
       data.tasks.forEach(task => {
         if ((task.type === 'daily' || task.type === 'weekly' || task.type === 'monthly') && !task.lastReset) {
