@@ -3,7 +3,13 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Client & Task Manager – Multi‑Design</title>
+  <title>Client & Task Manager – Sidebar Edition</title>
+  
+  <!-- Google Fonts for all designs -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@400;700&family=Inter:wght@400;500;600;700&family=Nunito:wght@400;600;700&family=Orbitron:wght@400;500;700&family=Quicksand:wght@400;600;700&display=swap" rel="stylesheet">
+  
   <style>
     /* ============================
        RESET & BASE VARIABLES
@@ -30,10 +36,11 @@
     }
 
     body {
-      min-height:100vh; display:flex; justify-content:center; padding:20px;
+      margin:0; padding:0;
       font-family: var(--font);
       background: var(--bg);
       transition: background 0.5s, font-family 0.5s;
+      overflow: hidden;
     }
 
     /* ============================
@@ -49,7 +56,6 @@
       --blur: blur(20px) saturate(180%);
       --modal-bg: rgba(255,255,255,0.7);
     }
-
     body.design-neon {
       --primary: #ff007f;
       --primary-hover: #e60073;
@@ -68,7 +74,6 @@
       --task-radius: 12px;
       --font: 'Orbitron', sans-serif;
     }
-
     body.design-pastel {
       --primary: #f472b6;
       --primary-hover: #ec4899;
@@ -87,7 +92,6 @@
       --task-radius: 24px;
       --font: 'Nunito', sans-serif;
     }
-
     body.design-darkpro {
       --primary: #4f8cff;
       --primary-hover: #3a6fd8;
@@ -106,7 +110,6 @@
       --task-radius: 8px;
       --font: 'Inter', system-ui, sans-serif;
     }
-
     body.design-nature {
       --primary: #4ade80;
       --primary-hover: #22c55e;
@@ -125,7 +128,6 @@
       --task-radius: 20px;
       --font: 'Quicksand', sans-serif;
     }
-
     body.design-minimal {
       --primary: #000000;
       --primary-hover: #333333;
@@ -146,23 +148,62 @@
     }
 
     /* ============================
-       GLOBAL COMPONENT STYLES
+       SIDEBAR LAYOUT
        ============================ */
     .app {
-      width:100%; max-width:1440px;
+      display: flex;
+      height: 100vh; width:100vw; max-width:100%;
       background: var(--glass-bg);
       backdrop-filter: var(--blur);
       -webkit-backdrop-filter: var(--blur);
-      border-radius: var(--radius);
-      box-shadow: var(--shadow);
-      border: 1px solid var(--glass-border);
-      overflow:hidden;
-      display:flex; flex-direction:column;
-      transition: all 0.4s;
       color: var(--text);
+      transition: background 0.4s;
+    }
+    .sidebar {
+      width: 230px; flex-shrink:0;
+      background: var(--glass-bg);
+      backdrop-filter: var(--blur);
+      -webkit-backdrop-filter: var(--blur);
+      border-right: 1px solid var(--glass-border);
+      display:flex; flex-direction:column; padding: 24px 12px;
+      transition: background 0.4s;
+      overflow-y:auto;
+    }
+    .sidebar .logo {
+      font-weight:700; font-size:20px; margin-bottom:20px;
+      color:var(--text); text-align: center;
+    }
+    .sidebar .tab-btn {
+      display:block; width:100%; text-align:left; margin-bottom:4px;
+      background: transparent; border:none; color:var(--text-secondary);
+      padding:12px 20px; border-radius: var(--button-radius);
+      font-size:15px; font-weight:500;
+      cursor:pointer;
+      transition: background var(--transition), color var(--transition);
+    }
+    .sidebar .tab-btn:hover { background: var(--primary); color:white; }
+    .sidebar .tab-btn.active { background: var(--primary); color:white; font-weight:600; }
+    .sidebar .info-row {
+      margin-top:auto; padding: 12px 20px; font-size:13px;
+      color: var(--text-secondary);
+    }
+    .sidebar .settings-btn {
+      margin-top: 8px;
+      background: var(--card-bg);
+      border:1px solid var(--glass-border);
+      border-radius: var(--button-radius);
+      padding:12px; text-align:center;
+      cursor:pointer; color:var(--text-secondary);
+      font-weight:500;
+    }
+    .sidebar .settings-btn:hover { background: var(--primary); color:white; }
+
+    /* Main content */
+    .main-content {
+      flex:1; overflow-y:auto; padding:24px;
     }
 
-    /* Toast */
+    /* Toasts & overlays */
     .toast {
       position:fixed; bottom:30px; left:50%; transform:translateX(-50%);
       background: rgba(16,185,129,0.85); backdrop-filter: blur(10px);
@@ -172,8 +213,6 @@
       pointer-events:none; border:1px solid rgba(255,255,255,0.3);
     }
     .toast.show { opacity:1; }
-
-    /* Full‑screen saving overlay */
     #saving-overlay {
       position:fixed; top:0; left:0; width:100%; height:100%;
       background: rgba(0,0,0,0.3);
@@ -198,8 +237,6 @@
       animation: spin 0.8s linear infinite;
       margin:0 auto 16px;
     }
-
-    /* Update notification */
     #update-notification {
       display: none;
       background: rgba(254,243,199,0.8);
@@ -210,8 +247,6 @@
       justify-content: space-between;
       border-bottom: 1px solid rgba(255,255,255,0.5);
     }
-
-    /* Loading overlay (for sync) */
     #loading-overlay {
       position:fixed; top:0; left:0; width:100%; height:100%;
       background: rgba(255,255,255,0.3);
@@ -238,39 +273,8 @@
     }
     @keyframes spin { to { transform:rotate(360deg); } }
 
-    /* Tabs */
-    .tabs {
-      display:flex; align-items:center; gap:6px;
-      padding:10px 24px;
-      background: var(--glass-bg);
-      backdrop-filter: var(--blur);
-      border-bottom:1px solid var(--glass-border);
-    }
-    .tab-btn {
-      padding:10px 22px; background:transparent; border:none;
-      color:var(--text-secondary); font-size:14px; font-weight:500;
-      cursor:pointer; border-radius: 30px;
-      transition: all var(--transition);
-    }
-    .tab-btn:hover { background: var(--primary); color:white; }
-    .tab-btn.active { background: var(--primary); color:white; font-weight:600; }
-    .today-day, .ph-clock, .active-users {
-      margin-left:auto; margin-right:8px; font-size:13px;
-      color:var(--text-secondary); font-weight:500;
-    }
-    .settings-btn {
-      background: var(--card-bg);
-      border:1px solid var(--glass-border);
-      width:38px; height:38px; border-radius:50%;
-      display:flex; align-items:center; justify-content:center;
-      cursor:pointer; transition: all var(--transition);
-      color:var(--text-secondary);
-      backdrop-filter: var(--blur);
-    }
-    .settings-btn:hover { background: var(--primary); color:white; }
-
-    /* Content */
-    .tab-content { padding:24px; display:none; }
+    /* Tabs content */
+    .tab-content { display:none; }
     .tab-content.active { display:block; animation: fadeSlide 0.3s ease; }
     @keyframes fadeSlide { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:translateY(0); } }
 
@@ -291,7 +295,6 @@
       box-shadow: none;
     }
     button.secondary:hover { background: var(--glass-bg); }
-
     .button-spinner {
       display: none;
       width: 16px; height: 16px;
@@ -305,7 +308,7 @@
     button:disabled .button-spinner { display: inline-block; }
     button:disabled .button-text { display: inline-block; }
 
-    .card {
+    .card, .client-card, .calendar-wrapper, .day-details {
       background: var(--card-bg);
       backdrop-filter: var(--blur);
       border-radius: var(--radius);
@@ -314,7 +317,6 @@
       border: 1px solid var(--glass-border);
     }
     .today-title { font-weight:600; margin-bottom:14px; font-size:16px; }
-
     .filter-bar { display:flex; gap:12px; align-items:center; margin-bottom:20px; flex-wrap:wrap; }
     .filter-bar select {
       padding:8px 16px; border:1px solid var(--glass-border);
@@ -323,7 +325,6 @@
       color:var(--text);
     }
     .button-row { display:flex; gap:8px; margin-left:auto; }
-
     .task-item {
       display:flex; align-items:center; gap:12px;
       padding:12px 16px;
@@ -340,14 +341,8 @@
     .employee-dot { display:inline-block; width:10px; height:10px; border-radius:50%; margin-right:4px; }
 
     #today-tasks, #priority-today, #upcoming-events { max-height:250px; overflow-y:auto; }
-
     .client-tasks-grid { display:flex; flex-direction:column; gap:20px; }
     .client-card {
-      background: var(--card-bg);
-      backdrop-filter: var(--blur);
-      border-radius: var(--radius);
-      padding:22px; box-shadow:var(--shadow);
-      border:1px solid var(--glass-border);
       border-left:5px solid var(--primary);
       transition: transform var(--transition);
     }
@@ -375,13 +370,7 @@
     .left-panel { width:340px; flex-shrink:0; display:flex; flex-direction:column; gap:16px; }
     .right-panel { flex:1; min-width:0; }
 
-    .calendar-wrapper {
-      background: var(--card-bg);
-      backdrop-filter: var(--blur);
-      border-radius: var(--radius);
-      padding:20px; box-shadow:var(--shadow);
-      border:1px solid var(--glass-border);
-    }
+    .calendar-wrapper { /* additional */ }
     .calendar-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; }
     .month-title { font-size:22px; font-weight:600; }
     .calendar-grid { display:grid; grid-template-columns:repeat(7,1fr); gap:6px; text-align:center; }
@@ -401,10 +390,7 @@
     .calendar-day.today.has-events::after { background:white; }
     .calendar-day.selected { outline:2px solid var(--primary); outline-offset:2px; }
     .day-details {
-      background: var(--card-bg);
-      backdrop-filter: var(--blur);
-      border-radius: 16px; padding:18px; margin-top:18px;
-      border:1px solid var(--glass-border);
+      padding:18px; margin-top:18px;
     }
 
     /* Modals – auto‑sizing */
@@ -457,8 +443,6 @@
     }
     .hex-input-group input[type="text"] { width:90px; }
     .color-dot { display:inline-block; width:18px; height:18px; border-radius:6px; border:1px solid var(--glass-border); }
-
-    /* Color swatch for palette (no text) */
     .color-swatch {
       display: inline-block;
       width: 28px;
@@ -539,6 +523,93 @@
       width:20px; height:20px; accent-color:var(--primary);
     }
 
+    /* Notes – sticky notes */
+    .notes-grid {
+      display:grid; grid-template-columns:repeat(auto-fill, minmax(200px,1fr));
+      gap:16px;
+    }
+    .sticky-note {
+      border-radius: 12px; padding:16px;
+      box-shadow: 3px 5px 10px rgba(0,0,0,0.1);
+      position:relative;
+      min-height:120px;
+      word-wrap:break-word;
+      font-family: 'Caveat', cursive;
+      font-size: 20px;
+    }
+    .sticky-note .delete-note {
+      position:absolute; top:8px; right:8px;
+      background: none; border:none; color:var(--text-secondary);
+      cursor:pointer; font-size:18px;
+    }
+    .add-note-btn { margin-bottom:20px; }
+
+    /* Chat widget */
+    .chat-bubble {
+      position:fixed; bottom:20px; right:20px;
+      width:56px; height:56px; border-radius:50%;
+      background: var(--primary); color:white;
+      display:flex; align-items:center; justify-content:center;
+      cursor:pointer; box-shadow:0 4px 15px rgba(0,0,0,0.3);
+      z-index:400;
+      font-size:24px;
+      transition: transform 0.3s;
+    }
+    .chat-bubble:hover { transform:scale(1.1); }
+    .chat-badge {
+      position:absolute; top:-4px; right:-4px;
+      background: #ef4444; color:white;
+      width:22px; height:22px; border-radius:50%;
+      display:flex; align-items:center; justify-content:center;
+      font-size:12px; font-weight:bold;
+      display:none;
+    }
+    .chat-panel {
+      position:fixed; bottom:90px; right:20px;
+      width:320px; height:400px;
+      background: var(--card-bg);
+      backdrop-filter: var(--blur);
+      border-radius: 20px;
+      box-shadow:0 10px 30px rgba(0,0,0,0.2);
+      border:1px solid var(--glass-border);
+      display:none; flex-direction:column;
+      z-index:399;
+      overflow:hidden;
+    }
+    .chat-panel.open { display:flex; }
+    .chat-header {
+      padding:14px 18px; background: var(--primary);
+      color:white; font-weight:600;
+      display:flex; justify-content:space-between; align-items:center;
+    }
+    .chat-messages {
+      flex:1; overflow-y:auto; padding:10px;
+    }
+    .chat-message {
+      margin-bottom:8px; max-width:80%;
+      padding:8px 12px; border-radius:14px;
+      background: var(--input-bg);
+      color:var(--text);
+      font-size:14px;
+      clear:both;
+    }
+    .chat-message.mine {
+      background: var(--primary);
+      color:white;
+      float:right;
+    }
+    .chat-input-row {
+      display:flex; padding:10px; border-top:1px solid var(--glass-border);
+    }
+    .chat-input-row input {
+      flex:1; border-radius:20px; margin-right:8px;
+      padding:8px 14px; border:1px solid var(--glass-border);
+      background: var(--input-bg); color:var(--text);
+    }
+    .chat-input-row button {
+      border-radius:50%; width:40px; height:40px; padding:0;
+    }
+
     /* Scrollbar */
     ::-webkit-scrollbar { width:6px; }
     ::-webkit-scrollbar-track { background: transparent; }
@@ -548,11 +619,12 @@
       .dashboard-layout { flex-direction:column; }
       .left-panel { width:100%; }
       .modal-content { max-width:95%; }
+      .sidebar { width: 180px; }
     }
   </style>
 </head>
 <body class="design-glass">
-<div class="app">
+  <!-- Toast & Overlays -->
   <div id="toast" class="toast"></div>
   <div id="saving-overlay">
     <div class="saving-box">
@@ -570,77 +642,108 @@
     <span>🔄 Your co-worker updated the list.</span>
     <button id="refresh-now-btn" style="background:#f59e0b; color:white; border:none; border-radius:30px; padding:8px 18px; cursor:pointer; font-weight:500;">↻ Refresh now</button>
   </div>
-
-  <div class="tabs">
+  <div class="app">
+  <!-- Sidebar -->
+  <div class="sidebar">
+    <div class="logo">📋 Task Manager</div>
     <button class="tab-btn active" data-tab="dashboard">📋 Dashboard</button>
     <button class="tab-btn" data-tab="calendar">📅 Calendar</button>
     <button class="tab-btn" data-tab="clients">👥 Clients</button>
     <button class="tab-btn" data-tab="prompts">🤖 AI Prompts</button>
-    <span class="today-day" id="today-day"></span>
-    <span class="ph-clock" id="ph-clock"></span>
-    <span class="active-users" id="active-users">👥 0 online</span>
-    <button class="settings-btn" id="open-settings">⚙️</button>
+    <button class="tab-btn" data-tab="notes">📝 Notes</button>
+    <div class="info-row">
+      <div id="today-day"></div>
+      <div id="ph-clock"></div>
+      <div id="active-users">👥 0 online</div>
+    </div>
+    <div class="settings-btn" id="open-settings">⚙️ Settings</div>
   </div>
 
-  <!-- Dashboard -->
-  <div class="tab-content active" id="dashboard">
-    <div class="dashboard-layout">
-      <div class="left-panel">
-        <div class="card"><div class="today-title">📌 Today's Tasks</div><div id="today-tasks"></div></div>
-        <div class="card"><div class="today-title">⚡ Priority Today</div><div id="priority-today"></div></div>
-        <div class="card"><div class="today-title">📅 Upcoming Events</div><div id="upcoming-events"></div></div>
-      </div>
-      <div class="right-panel">
-        <h2>Client To‑Do Lists</h2>
-        <div class="filter-bar">
-          <div style="display:flex; align-items:center; gap:6px;">
-            <label style="font-size:13px; color:var(--text-secondary);">Client:</label>
-            <select id="filter-client"><option value="all">All Clients</option></select>
-          </div>
-          <div style="display:flex; align-items:center; gap:6px;">
-            <label style="font-size:13px; color:var(--text-secondary);">Employee:</label>
-            <select id="filter-employee"><option value="all">All Employees</option></select>
-          </div>
-          <div class="button-row">
-            <button id="add-task-btn">+ Task</button>
-            <button id="add-prio-btn" class="secondary">⚡ Prio</button>
-            <button id="add-event-btn" class="secondary">📅 Event</button>
-          </div>
+  <!-- Main Content -->
+  <div class="main-content">
+    <!-- Dashboard -->
+    <div class="tab-content active" id="dashboard">
+      <div class="dashboard-layout">
+        <div class="left-panel">
+          <div class="card"><div class="today-title">📌 Today's Tasks</div><div id="today-tasks"></div></div>
+          <div class="card"><div class="today-title">⚡ Priority Today</div><div id="priority-today"></div></div>
+          <div class="card"><div class="today-title">📅 Upcoming Events</div><div id="upcoming-events"></div></div>
         </div>
-        <div id="dashboard-clients" class="client-tasks-grid"></div>
+        <div class="right-panel">
+          <h2>Client To‑Do Lists</h2>
+          <div class="filter-bar">
+            <div style="display:flex; align-items:center; gap:6px;">
+              <label style="font-size:13px; color:var(--text-secondary);">Client:</label>
+              <select id="filter-client"><option value="all">All Clients</option></select>
+            </div>
+            <div style="display:flex; align-items:center; gap:6px;">
+              <label style="font-size:13px; color:var(--text-secondary);">Employee:</label>
+              <select id="filter-employee"><option value="all">All Employees</option></select>
+            </div>
+            <div class="button-row">
+              <button id="add-task-btn">+ Task</button>
+              <button id="add-prio-btn" class="secondary">⚡ Prio</button>
+              <button id="add-event-btn" class="secondary">📅 Event</button>
+            </div>
+          </div>
+          <div id="dashboard-clients" class="client-tasks-grid"></div>
+        </div>
       </div>
     </div>
-  </div>
 
-  <!-- Calendar -->
-  <div class="tab-content" id="calendar">
-    <h2>📅 Calendar</h2>
-    <div class="calendar-wrapper">
-      <div class="calendar-header">
-        <button id="cal-prev-month" class="secondary">◀</button>
-        <span class="month-title" id="cal-month-year"></span>
-        <button id="cal-next-month" class="secondary">▶</button>
+    <!-- Calendar -->
+    <div class="tab-content" id="calendar">
+      <h2>📅 Calendar</h2>
+      <div class="calendar-wrapper">
+        <div class="calendar-header">
+          <button id="cal-prev-month" class="secondary">◀</button>
+          <span class="month-title" id="cal-month-year"></span>
+          <button id="cal-next-month" class="secondary">▶</button>
+        </div>
+        <div class="calendar-grid" id="cal-days"></div>
+        <div id="cal-details" class="day-details" style="display:none;"></div>
       </div>
-      <div class="calendar-grid" id="cal-days"></div>
-      <div id="cal-details" class="day-details" style="display:none;"></div>
     </div>
-  </div>
 
-  <!-- Clients -->
-  <div class="tab-content" id="clients">
-    <h2>👥 Clients</h2>
-    <div id="clients-list" class="clients-grid"></div>
-    <button id="add-client-btn" style="margin-top:16px;">+ Add Client</button>
-  </div>
+    <!-- Clients -->
+    <div class="tab-content" id="clients">
+      <h2>👥 Clients</h2>
+      <div id="clients-list" class="clients-grid"></div>
+      <button id="add-client-btn" style="margin-top:16px;">+ Add Client</button>
+    </div>
 
-  <!-- AI Prompts -->
-  <div class="tab-content" id="prompts">
-    <h2>🤖 AI Prompts</h2>
-    <div id="prompts-clients-grid" class="clients-grid"></div>
+    <!-- AI Prompts -->
+    <div class="tab-content" id="prompts">
+      <h2>🤖 AI Prompts</h2>
+      <div id="prompts-clients-grid" class="clients-grid"></div>
+    </div>
+
+    <!-- Notes -->
+    <div class="tab-content" id="notes">
+      <h2>📝 Sticky Notes</h2>
+      <button id="add-note-btn" class="add-note-btn">+ Add Note</button>
+      <div id="notes-grid" class="notes-grid"></div>
+    </div>
   </div>
 </div>
 
-<!-- Modals (each save button now contains a spinner) -->
+<!-- Chat widget -->
+<div class="chat-bubble" id="chat-bubble">
+  💬
+  <span class="chat-badge" id="chat-badge">!</span>
+</div>
+<div class="chat-panel" id="chat-panel">
+  <div class="chat-header">
+    <span>Team Chat</span>
+    <button id="close-chat" style="background:none;border:none;color:white;font-size:18px;">✕</button>
+  </div>
+  <div class="chat-messages" id="chat-messages"></div>
+  <div class="chat-input-row">
+    <input type="text" id="chat-input" placeholder="Message...">
+    <button id="send-chat">➤</button>
+  </div>
+</div>
+<!-- ================== MODALS ================== -->
 <div class="modal" id="task-modal"><div class="modal-content"><h2>Add Task</h2><div class="form-group"><label>Client</label><select id="task-client"></select></div><div class="form-group"><label>Type</label><select id="task-type"><option value="daily">Daily</option><option value="weekly">Weekly</option><option value="monthly">Monthly</option></select></div><div class="form-group"><label>Task Description</label><input type="text" id="task-text" placeholder="e.g., Check emails"></div><div class="form-group"><label>Assign Employee (optional)</label><select id="task-employee"><option value="">-- None --</option></select></div><button id="save-task"><span class="button-text">Add</span><span class="button-spinner"></span></button><button class="secondary" id="close-task-modal">Cancel</button></div></div>
 <div class="modal" id="edit-task-modal"><div class="modal-content"><h2>Edit Task</h2><input type="hidden" id="edit-task-id"><div class="form-group"><label>Client</label><select id="edit-task-client"></select></div><div class="form-group"><label>Type</label><select id="edit-task-type"><option value="daily">Daily</option><option value="weekly">Weekly</option><option value="monthly">Monthly</option></select></div><div class="form-group"><label>Task Description</label><input type="text" id="edit-task-text"></div><div class="form-group"><label>Assign Employee</label><select id="edit-task-employee"><option value="">-- None --</option></select></div><button id="save-edit-task"><span class="button-text">Save Changes</span><span class="button-spinner"></span></button><button class="secondary" id="close-edit-task-modal">Cancel</button></div></div>
 <div class="modal" id="prio-modal"><div class="modal-content"><h2 id="prio-modal-title">Add Priority Task</h2><input type="hidden" id="prio-edit-id"><div class="form-group"><label>Client</label><select id="prio-client"></select></div><div class="form-group"><label>Description</label><input type="text" id="prio-text" placeholder="Task description"></div><div class="form-group"><label>Urgency</label><select id="prio-urgency"><option value="normal">Normal</option><option value="important">Important</option><option value="critical">Critical</option><option value="urgent">Urgent</option></select></div><div class="form-group"><label>Due Date</label><input type="date" id="prio-date"></div><div class="form-group"><label>Assign Employee (optional)</label><select id="prio-employee"><option value="">-- None --</option></select></div><button id="save-prio"><span class="button-text">Save</span><span class="button-spinner"></span></button><button class="secondary" id="close-prio-modal">Cancel</button></div></div>
@@ -654,8 +757,8 @@
 
 <script>
   (function() {
-    const DEFAULT_API_URL = 'https://script.google.com/macros/s/AKfycbxI75jpD26QB7SKtFgbB5RIC6OLugs_qZbju96Xn4k5iWmp8OzAj-gKvMXTLh3qmBlv/exec';
-    let data = { clients:[], tasks:[], prompts:[], employees:[], design:'glass', webAppUrl:'', lastModified:0, lastModifier:'' };
+    const DEFAULT_API_URL = 'https://script.google.com/macros/s/AKfycbza7L0dZEMvh4LOiyAXEYu6oKf6Aa64VC32_-iBDh0Z1hORTJs9w_CfFzZRoPpY1adG/exec';
+    let data = { clients:[], tasks:[], prompts:[], employees:[], notes:[], chatMessages:[], design:'glass', webAppUrl:'', lastModified:0, lastModifier:'' };
     let currentFilter = { clientId:'all', employeeId:'all' };
     let calDate = new Date();
     let selectedCalDate = null;
@@ -668,25 +771,17 @@
 
     function getApiUrl() { return localStorage.getItem('clientManagerApiUrl') || DEFAULT_API_URL; }
 
-    // Full‑screen saving overlay
-    function showSavingOverlay() {
-      isSaving = true;
-      document.getElementById('saving-overlay').style.display = 'flex';
-    }
-    function hideSavingOverlay() {
-      isSaving = false;
-      document.getElementById('saving-overlay').style.display = 'none';
-    }
-
-    // Disable/enable a save button and swap its text/spinner
-    function setButtonSaving(button, saving) {
-      button.disabled = saving;
+    // ---------- SAVING OVERLAY & BUTTONS ----------
+    function showSavingOverlay() { isSaving = true; document.getElementById('saving-overlay').style.display = 'flex'; }
+    function hideSavingOverlay() { isSaving = false; document.getElementById('saving-overlay').style.display = 'none'; }
+    function setButtonSaving(btn, saving) {
+      btn.disabled = saving;
       if (saving) {
-        button.querySelector('.button-text').style.display = 'none';
-        button.querySelector('.button-spinner').style.display = 'inline-block';
+        btn.querySelector('.button-text').style.display = 'none';
+        btn.querySelector('.button-spinner').style.display = 'inline-block';
       } else {
-        button.querySelector('.button-text').style.display = '';
-        button.querySelector('.button-spinner').style.display = 'none';
+        btn.querySelector('.button-text').style.display = '';
+        btn.querySelector('.button-spinner').style.display = 'none';
       }
     }
 
@@ -705,10 +800,11 @@
       if(!data.tasks) data.tasks = [];
       if(!data.prompts) data.prompts = [];
       if(!data.employees) data.employees = [];
+      if(!data.notes) data.notes = [];
+      if(!data.chatMessages) data.chatMessages = [];
       data.clients.forEach(c => { if(c.location===undefined) c.location=''; });
     }
 
-    // Generic save function with overlay and button handling
     async function saveItem(type, item, operation, saveButton = null) {
       if (saveButton) setButtonSaving(saveButton, true);
       showSavingOverlay();
@@ -791,6 +887,7 @@
       else if(id==='calendar') renderCalendarTab();
       else if(id==='clients') { renderClients(); updateClientTimes(); }
       else if(id==='prompts') renderPromptTab();
+      else if(id==='notes') renderNotes();
     }
 
     function applyDesign(design) {
@@ -800,7 +897,7 @@
       if(sel) sel.value = design;
     }
 
-    // ---------- HELPERS (all unchanged) ----------
+    // ---------- HELPERS ----------
     function to12h(t) { if(!t) return ''; const [h,m]=t.split(':').map(Number); const ampm=h>=12?'pm':'am'; const h12=h%12||12; return `${h12}:${String(m).padStart(2,'0')}${ampm}`; }
     function tzLabel(tz) { const m={'Asia/Manila':'PH-Manila','America/Los_Angeles':'USA-LA','America/New_York':'USA-NY','America/Chicago':'USA-CHI','America/Denver':'USA-DEN','Europe/London':'UK-London','Europe/Paris':'FR-Paris','Asia/Tokyo':'JP-Tokyo','Asia/Dubai':'UAE-Dubai','Australia/Sydney':'AU-Sydney'}; return m[tz]||tz.replace(/_/g,' ').split('/').pop(); }
     function updatePHClock() { const el=document.getElementById('ph-clock'); if(!el) return; const now=new Date(); el.innerHTML=`🇵🇭 ${new Intl.DateTimeFormat('en-US',{timeZone:'Asia/Manila',hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:true}).format(now)}`; }
@@ -833,7 +930,6 @@
         else if(task.type==='monthly' && task.lastReset!==monthFirst) { task.completed=false; task.lastReset=monthFirst; await saveItem('task',task,'update'); }
       }
     }
-
     function getTaskDueToday(task) {
       const today = getTodayDateStr();
       if (task.type==='daily') return task.lastReset===today && !task.completed;
@@ -842,20 +938,21 @@
       if (task.type==='priority' && task.dueDate===today && !task.completed) return true;
       return false;
     }
-
     function urgencyColor(u) { switch(u) { case 'important': return '#facc15'; case 'critical': return '#f97316'; case 'urgent': return '#ef4444'; default: return '#94a3b8'; } }
 
+    // ---------- SIDEBAR TAB SWITCHING ----------
     function switchTab(tabId) {
-      document.querySelectorAll('.tab-content').forEach(el=>el.classList.remove('active'));
-      document.querySelectorAll('.tab-btn').forEach(el=>el.classList.remove('active'));
+      document.querySelectorAll('.main-content .tab-content').forEach(el=>el.classList.remove('active'));
+      document.querySelectorAll('.sidebar .tab-btn').forEach(el=>el.classList.remove('active'));
+      document.querySelector(`.sidebar .tab-btn[data-tab="${tabId}"]`).classList.add('active');
       document.getElementById(tabId).classList.add('active');
-      document.querySelector(`.tab-btn[data-tab="${tabId}"]`).classList.add('active');
       if(tabId==='dashboard') renderDashboard();
       else if(tabId==='calendar') renderCalendarTab();
       else if(tabId==='clients') { renderClients(); updateClientTimes(); }
       else if(tabId==='prompts') renderPromptTab();
+      else if(tabId==='notes') renderNotes();
     }
-    document.querySelectorAll('.tab-btn').forEach(btn=>btn.addEventListener('click',()=>switchTab(btn.dataset.tab)));
+    document.querySelectorAll('.sidebar .tab-btn').forEach(btn=>btn.addEventListener('click',()=>switchTab(btn.dataset.tab)));
 
     // ---------- CALENDAR RENDERING ----------
     function getEventsForDate(d) { return data.tasks.filter(t=>(t.type==='priority' && t.dueDate===d) || (t.type==='event' && t.eventDate===d)); }
@@ -1036,7 +1133,7 @@
       });
     }
 
-    // ---------- ADD / EDIT TASK, PRIO, EVENT (now using saveItem with button) ----------
+    // ---------- ADD / EDIT TASK, PRIO, EVENT (with button) ----------
     document.getElementById('add-task-btn').addEventListener('click',()=>{ populateClientSelect(document.getElementById('task-client')); populateEmployeeSelect(document.getElementById('task-employee')); document.getElementById('task-text').value=''; document.getElementById('task-modal').classList.add('active'); });
     document.getElementById('add-prio-btn').addEventListener('click',()=>{ document.getElementById('prio-edit-id').value=''; document.getElementById('prio-modal-title').textContent='Add Priority Task'; document.getElementById('save-prio').querySelector('.button-text').textContent='Add'; populateClientSelect(document.getElementById('prio-client')); populateEmployeeSelect(document.getElementById('prio-employee')); document.getElementById('prio-text').value=''; document.getElementById('prio-urgency').value='normal'; document.getElementById('prio-date').value=''; document.getElementById('prio-modal').classList.add('active'); });
     document.getElementById('add-event-btn').addEventListener('click',()=>{ document.getElementById('event-edit-id').value=''; document.getElementById('event-modal-title').textContent='Add Event'; document.getElementById('save-event').querySelector('.button-text').textContent='Add'; populateClientSelect(document.getElementById('event-client')); populateEmployeeSelect(document.getElementById('event-employee')); document.getElementById('event-text').value=''; document.getElementById('event-date').value=''; document.getElementById('event-time').value=''; document.getElementById('event-type').value='meeting'; document.getElementById('event-custom-type').value=''; document.getElementById('event-custom-type-group').style.display='none'; document.getElementById('event-modal').classList.add('active'); });
@@ -1185,12 +1282,10 @@
     function renderPromptTab() {
       const cont = document.getElementById('prompts-clients-grid');
       if (!data.clients.length) { cont.innerHTML = '<p>No clients yet.</p>'; return; }
-
       cont.innerHTML = data.clients.map(c => {
         const accent = c.colors?.[0] || 'var(--primary)';
         const textPrompts = data.prompts.filter(p => p.clientId === c.id && p.type === 'text');
         const imagePrompts = data.prompts.filter(p => p.clientId === c.id && p.type === 'image');
-
         return `
           <div class="prompt-client-card">
             <div class="prompt-header" style="background: linear-gradient(135deg, ${accent}, ${adjustColor(accent, -20)});">
@@ -1219,7 +1314,6 @@
         `;
       }).join('');
 
-      // Re-attach event listeners for edit/delete buttons
       cont.querySelectorAll('.edit-prompt-btn').forEach(b => b.addEventListener('click', e => {
         e.stopPropagation();
         const p = data.prompts.find(p => p.id == b.dataset.id);
@@ -1233,7 +1327,6 @@
           renderPromptTab();
         });
       }));
-      // Re-bind the add buttons
       cont.querySelectorAll('.add-text-prompt-btn, .add-image-prompt-btn').forEach(b => {
         b.addEventListener('click', e => {
           const clientId = b.dataset.clientId;
@@ -1283,7 +1376,6 @@
       const editId = document.getElementById('edit-prompt-id').value;
       const clientId = document.getElementById('prompt-client-id-hidden').value;
       const type = document.getElementById('prompt-type').value;
-
       if (editId) {
         const p = data.prompts.find(p => p.id == editId);
         if (!p) return;
@@ -1326,18 +1418,13 @@
         }
       }
     });
-
-    document.getElementById('close-generate-modal').addEventListener('click', () => {
-      document.getElementById('generate-modal').classList.remove('active');
-    });
-
+    document.getElementById('close-generate-modal').addEventListener('click', () => document.getElementById('generate-modal').classList.remove('active'));
     document.getElementById('copy-prompt').addEventListener('click', () => {
       const ta = document.getElementById('generated-prompt');
       ta.select();
       document.execCommand('copy');
       alert('Copied!');
     });
-
     function populateClientSelect(sel, selId = null) {
       sel.innerHTML = '<option value="">-- Choose --</option>' + data.clients.map(c => `<option value="${c.id}" ${c.id === selId ? 'selected' : ''}>${c.name}</option>`).join('');
     }
@@ -1366,7 +1453,6 @@
         });
       }));
     }
-
     function openEmployeeModal(emp = null) {
       document.getElementById('edit-employee-id').value = emp ? emp.id : '';
       document.getElementById('employee-modal-title').textContent = emp ? 'Edit Employee' : 'Add Employee';
@@ -1376,14 +1462,8 @@
       document.getElementById('employee-color-hex').value = color;
       document.getElementById('employee-modal').classList.add('active');
     }
-
-    document.getElementById('employee-color-picker').addEventListener('input', function () {
-      document.getElementById('employee-color-hex').value = this.value;
-    });
-    document.getElementById('employee-color-hex').addEventListener('input', function () {
-      const v = this.value.trim();
-      if (/^#[0-9a-fA-F]{6}$/.test(v)) document.getElementById('employee-color-picker').value = v;
-    });
+    document.getElementById('employee-color-picker').addEventListener('input', function () { document.getElementById('employee-color-hex').value = this.value; });
+    document.getElementById('employee-color-hex').addEventListener('input', function () { const v = this.value.trim(); if (/^#[0-9a-fA-F]{6}$/.test(v)) document.getElementById('employee-color-picker').value = v; });
     document.getElementById('add-employee-btn').addEventListener('click', () => openEmployeeModal());
     document.getElementById('close-employee-modal').addEventListener('click', () => document.getElementById('employee-modal').classList.remove('active'));
     document.getElementById('save-employee').addEventListener('click', async () => {
@@ -1403,7 +1483,6 @@
       populateAllEmployeeSelects();
       renderDashboard();
     });
-
     function populateAllEmployeeSelects() {
       populateEmployeeSelect(document.getElementById('task-employee'));
       populateEmployeeSelect(document.getElementById('edit-task-employee'));
@@ -1426,14 +1505,12 @@
     });
     document.getElementById('close-settings').addEventListener('click', () => document.getElementById('settings-modal').classList.remove('active'));
 
-    // Design change handler
     document.getElementById('design-select').addEventListener('change', async function () {
       data.design = this.value;
       await saveItem('setting', { design: data.design, webAppUrl: getApiUrl() }, 'update');
       applyDesign(data.design);
     });
 
-    // API URL save
     document.getElementById('save-api-url').addEventListener('click', async () => {
       const url = document.getElementById('api-url').value.trim();
       if (url) {
@@ -1444,7 +1521,6 @@
       }
     });
 
-    // Settings tabs
     document.querySelectorAll('.settings-tab-btn').forEach(btn => btn.addEventListener('click', () => {
       document.querySelectorAll('.settings-tab-btn').forEach(b => b.classList.remove('active'));
       btn.classList.add('active');
@@ -1455,7 +1531,99 @@
       if (setting === 'employees') renderSettingsEmployees();
     }));
 
-    // ---------- INITIAL LOAD ----------
+    // ---------- NOTES ----------
+    function renderNotes() {
+      const grid = document.getElementById('notes-grid');
+      if (!data.notes.length) { grid.innerHTML = '<p>No sticky notes yet.</p>'; return; }
+      grid.innerHTML = data.notes.map(note => `
+        <div class="sticky-note" style="background:${note.color}">
+          <div class="delete-note" data-id="${note.id}">✕</div>
+          <p>${note.content}</p>
+          <small style="position:absolute; bottom:8px; left:16px; color:var(--text-secondary);">${note.author}</small>
+        </div>
+      `).join('');
+      document.querySelectorAll('.delete-note').forEach(b => b.addEventListener('click', async (e) => {
+        const id = b.dataset.id;
+        showConfirm('Delete this note?', async () => {
+          await saveItem('note', { id }, 'delete');
+          data.notes = data.notes.filter(n => n.id != id);
+          renderNotes();
+        });
+      }));
+    }
+
+    document.getElementById('add-note-btn').addEventListener('click', () => {
+      const content = prompt('Enter your note:');
+      if (!content) return;
+      const color = ['#fef3c7','#ffe0e0','#d1fae5','#e0e7ff','#f5d0fe'][Math.floor(Math.random()*5)];
+      const note = { id: Date.now().toString(), content, color, author: 'You' };
+      saveItem('note', note, 'add').then(() => {
+        data.notes.push(note);
+        renderNotes();
+      });
+    });
+
+    // ---------- CHAT ----------
+    let chatLastTs = 0;
+    let unreadCount = 0;
+    const chatBubble = document.getElementById('chat-bubble');
+    const chatBadge = document.getElementById('chat-badge');
+    const chatPanel = document.getElementById('chat-panel');
+    const chatMessages = document.getElementById('chat-messages');
+    const chatInput = document.getElementById('chat-input');
+
+    document.getElementById('chat-bubble').addEventListener('click', () => {
+      chatPanel.classList.toggle('open');
+      if (chatPanel.classList.contains('open')) {
+        unreadCount = 0;
+        chatBadge.style.display = 'none';
+        fetchChatMessages(0);
+      }
+    });
+    document.getElementById('close-chat').addEventListener('click', () => chatPanel.classList.remove('open'));
+
+    async function fetchChatMessages(since = 0) {
+      const res = await fetch(`${getApiUrl()}?action=getMessages&since=${since}`);
+      const data = await res.json();
+      if (data.messages.length) {
+        data.messages.forEach(msg => appendChatMessage(msg));
+        chatLastTs = data.latest;
+      }
+    }
+
+    function appendChatMessage(msg) {
+      const div = document.createElement('div');
+      div.className = 'chat-message' + (msg.userId === myUserId ? ' mine' : '');
+      div.textContent = `${msg.userName}: ${msg.text}`;
+      chatMessages.appendChild(div);
+      chatMessages.scrollTop = chatMessages.scrollHeight;
+    }
+
+    document.getElementById('send-chat').addEventListener('click', async () => {
+      const text = chatInput.value.trim();
+      if (!text) return;
+      await fetch(getApiUrl() + '?action=sendMessage', {
+        method:'POST',
+        body: JSON.stringify({ text, userId: myUserId, userName: 'You' })
+      });
+      chatInput.value = '';
+    });
+
+    // Poll for new messages every 3 seconds
+    setInterval(async () => {
+      if (!chatPanel.classList.contains('open')) {
+        const res = await fetch(`${getApiUrl()}?action=getMessages&since=${chatLastTs}`);
+        const data = await res.json();
+        if (data.messages.length) {
+          unreadCount += data.messages.length;
+          chatBadge.textContent = unreadCount > 9 ? '9+' : unreadCount;
+          chatBadge.style.display = 'flex';
+          chatLastTs = data.latest;
+        }
+      }
+    }, 3000);
+
+    // ---------- INIT ----------
     (async function init() {
       await loadAllData();
       applyDesign(data.design);
