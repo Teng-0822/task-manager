@@ -581,7 +581,9 @@
 
 <script>
   (function() {
-    const DEFAULT_API_URL = 'https://script.google.com/macros/s/AKfycbx4G4xudaXgC5WC4Hz2uvENva_eGfsA5zEH-SD8iI3KJwapJzBRVsuH5DprwlA0Fcf1/exec';
+    // ⚠️ IMPORTANT: Replace this with your latest web app URL after deploying the updated script!
+    const DEFAULT_API_URL = 'https://script.google.com/macros/s/PASTE_YOUR_DEPLOYMENT_URL_HERE/exec';
+    
     let data = { clients:[], tasks:[], prompts:[], employees:[], design:'glass', webAppUrl:'', lastModified:0, lastModifier:'' };
     let currentFilter = { clientId:'all', employeeId:'all' };
     let calDate = new Date();
@@ -693,7 +695,8 @@
     function applyDesign(design) {
       document.body.classList.remove('design-glass','design-neon','design-pastel','design-darkpro','design-nature','design-minimal');
       document.body.classList.add('design-' + design);
-      document.getElementById('design-select').value = design;
+      const sel = document.getElementById('design-select');
+      if(sel) sel.value = design;
     }
 
     // Helpers
@@ -1244,7 +1247,7 @@
     // Initial load
     (async function init() {
       await loadAllData();
-      applyDesign(data.design);
+      applyDesign(data.design);   // <-- this loads the saved design
       const today = getTodayDateStr();
       data.tasks.forEach(task => {
         if ((task.type === 'daily' || task.type === 'weekly' || task.type === 'monthly') && !task.lastReset) {
