@@ -173,23 +173,30 @@
     }
     .toast.show { opacity:1; }
 
-    /* Saving toast */
-    #saving-toast {
-      position:fixed; bottom:20px; left:50%; transform:translateX(-50%);
-      background: var(--primary); color:white;
-      padding:10px 24px; border-radius:30px;
-      font-weight:500; box-shadow:0 8px 20px rgba(0,0,0,0.15);
-      z-index:210; opacity:0; transition: opacity 0.3s;
-      pointer-events:none;
-      display:flex; align-items:center; gap:8px;
+    /* Full‑screen saving overlay */
+    #saving-overlay {
+      position:fixed; top:0; left:0; width:100%; height:100%;
+      background: rgba(0,0,0,0.3);
+      backdrop-filter: blur(4px);
+      z-index:250; display:none;
+      justify-content:center; align-items:center;
     }
-    #saving-toast.show { opacity:1; }
-    #saving-toast .mini-spinner {
-      width:16px; height:16px;
-      border:2px solid rgba(255,255,255,0.4);
-      border-top:2px solid white;
+    .saving-box {
+      background: var(--card-bg);
+      backdrop-filter: blur(15px);
+      border-radius: 24px;
+      padding: 30px 40px;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+      text-align: center;
+      border: 1px solid var(--glass-border);
+    }
+    .saving-spinner {
+      width:36px; height:36px;
+      border:3px solid rgba(255,255,255,0.5);
+      border-top:3px solid var(--primary);
       border-radius:50%;
-      animation: spin 0.6s linear infinite;
+      animation: spin 0.8s linear infinite;
+      margin:0 auto 16px;
     }
 
     /* Update notification */
@@ -204,7 +211,7 @@
       border-bottom: 1px solid rgba(255,255,255,0.5);
     }
 
-    /* Loading overlay */
+    /* Loading overlay (for sync) */
     #loading-overlay {
       position:fixed; top:0; left:0; width:100%; height:100%;
       background: rgba(255,255,255,0.3);
@@ -273,8 +280,10 @@
       padding:10px 22px; border-radius: var(--button-radius); font-size:14px; font-weight:500;
       cursor:pointer; transition: all var(--transition);
       box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+      position: relative;
     }
     button:hover { background: var(--primary-hover); transform:translateY(-2px); }
+    button:disabled { opacity: 0.7; cursor: wait; transform: none; }
     button.secondary {
       background: var(--card-bg);
       color: var(--text);
@@ -282,6 +291,19 @@
       box-shadow: none;
     }
     button.secondary:hover { background: var(--glass-bg); }
+
+    .button-spinner {
+      display: none;
+      width: 16px; height: 16px;
+      border: 2px solid rgba(255,255,255,0.4);
+      border-top: 2px solid white;
+      border-radius: 50%;
+      animation: spin 0.6s linear infinite;
+      margin-left: 8px;
+      vertical-align: middle;
+    }
+    button:disabled .button-spinner { display: inline-block; }
+    button:disabled .button-text { display: inline-block; }
 
     .card {
       background: var(--card-bg);
@@ -498,7 +520,6 @@
     .prompt-link-actions { display:flex; gap:6px; margin-left:8px; }
     .prompt-link-actions button { background:none; border:none; color:var(--text-secondary); cursor:pointer; padding:4px; border-radius:6px; }
     .prompt-link-actions button:hover { background: var(--card-bg); color:var(--text); }
-    .prompt-actions { display:flex; gap:8px; margin-top:12px; }
 
     .settings-tabs { display:flex; gap:12px; margin-bottom:20px; border-bottom:1px solid var(--glass-border); padding-bottom:12px; }
     .settings-tab-btn {
@@ -533,7 +554,12 @@
 <body class="design-glass">
 <div class="app">
   <div id="toast" class="toast"></div>
-  <div id="saving-toast"><span class="mini-spinner"></span> Saving...</div>
+  <div id="saving-overlay">
+    <div class="saving-box">
+      <div class="saving-spinner"></div>
+      <p style="color:var(--text); font-weight:500;">Saving...</p>
+    </div>
+  </div>
   <div id="loading-overlay">
     <div class="loading-box">
       <div class="spinner"></div>
@@ -614,23 +640,21 @@
   </div>
 </div>
 
-<!-- Modals -->
-<div class="modal" id="task-modal"><div class="modal-content"><h2>Add Task</h2><div class="form-group"><label>Client</label><select id="task-client"></select></div><div class="form-group"><label>Type</label><select id="task-type"><option value="daily">Daily</option><option value="weekly">Weekly</option><option value="monthly">Monthly</option></select></div><div class="form-group"><label>Task Description</label><input type="text" id="task-text" placeholder="e.g., Check emails"></div><div class="form-group"><label>Assign Employee (optional)</label><select id="task-employee"><option value="">-- None --</option></select></div><button id="save-task">Add</button><button class="secondary" id="close-task-modal">Cancel</button></div></div>
-<div class="modal" id="edit-task-modal"><div class="modal-content"><h2>Edit Task</h2><input type="hidden" id="edit-task-id"><div class="form-group"><label>Client</label><select id="edit-task-client"></select></div><div class="form-group"><label>Type</label><select id="edit-task-type"><option value="daily">Daily</option><option value="weekly">Weekly</option><option value="monthly">Monthly</option></select></div><div class="form-group"><label>Task Description</label><input type="text" id="edit-task-text"></div><div class="form-group"><label>Assign Employee</label><select id="edit-task-employee"><option value="">-- None --</option></select></div><button id="save-edit-task">Save Changes</button><button class="secondary" id="close-edit-task-modal">Cancel</button></div></div>
-<div class="modal" id="prio-modal"><div class="modal-content"><h2 id="prio-modal-title">Add Priority Task</h2><input type="hidden" id="prio-edit-id"><div class="form-group"><label>Client</label><select id="prio-client"></select></div><div class="form-group"><label>Description</label><input type="text" id="prio-text" placeholder="Task description"></div><div class="form-group"><label>Urgency</label><select id="prio-urgency"><option value="normal">Normal</option><option value="important">Important</option><option value="critical">Critical</option><option value="urgent">Urgent</option></select></div><div class="form-group"><label>Due Date</label><input type="date" id="prio-date"></div><div class="form-group"><label>Assign Employee (optional)</label><select id="prio-employee"><option value="">-- None --</option></select></div><button id="save-prio">Save</button><button class="secondary" id="close-prio-modal">Cancel</button></div></div>
-<div class="modal" id="event-modal"><div class="modal-content"><h2 id="event-modal-title">Add Event</h2><input type="hidden" id="event-edit-id"><div class="form-group"><label>Client</label><select id="event-client"></select></div><div class="form-group"><label>Description</label><input type="text" id="event-text" placeholder="Event description"></div><div class="form-group"><label>Date</label><input type="date" id="event-date"></div><div class="form-group"><label>Time</label><input type="time" id="event-time"></div><div class="form-group"><label>Type</label><select id="event-type"><option value="meeting">Meeting</option><option value="interview">Interview</option><option value="other">Other</option></select></div><div class="form-group" id="event-custom-type-group" style="display:none;"><label>Custom Type</label><input type="text" id="event-custom-type" placeholder="e.g., Workshop"></div><div class="form-group"><label>Assign Employee (optional)</label><select id="event-employee"><option value="">-- None --</option></select></div><button id="save-event">Save</button><button class="secondary" id="close-event-modal">Cancel</button></div></div>
-<div class="modal" id="client-modal"><div class="modal-content"><h2 id="client-modal-title">Add Client</h2><input type="hidden" id="edit-client-id"><div class="form-group"><label>Client Name</label><input type="text" id="client-name"></div><div class="form-group"><label>Work Start Time</label><input type="time" id="client-start"></div><div class="form-group"><label>Work End Time</label><input type="time" id="client-end"></div><div class="form-group"><label>Location / Timezone</label><input type="text" id="client-location" placeholder="e.g., Asia/Manila, Europe/London" list="timezone-list"><datalist id="timezone-list"><option value="Asia/Manila">Philippines</option><option value="America/Los_Angeles">San Francisco</option><option value="America/New_York">New York</option><option value="America/Chicago">Chicago</option><option value="America/Denver">Denver</option><option value="Europe/London">UK - London</option><option value="Europe/Paris">France - Paris</option><option value="Asia/Tokyo">Japan - Tokyo</option><option value="Asia/Dubai">UAE - Dubai</option><option value="Australia/Sydney">Australia - Sydney</option></datalist><small style="color:var(--text-secondary);">Enter a valid IANA timezone (e.g., Europe/Berlin)</small></div><div class="form-group"><label>Color Palette</label><div id="color-list" class="dynamic-list"></div><div class="hex-input-group"><input type="color" id="new-color-picker" value="#3b82f6"><input type="text" id="new-color-hex" placeholder="#3b82f6" maxlength="7" value="#3b82f6"><button id="add-color-btn" class="secondary">Add Color</button></div></div><div class="form-group"><label>Fonts</label><div id="font-list" class="dynamic-list"></div><div style="display:flex; gap:8px; margin-top:5px;"><input type="text" id="new-font" placeholder="Font name (e.g., Open Sans)"><button id="add-font-btn" class="secondary">Add Font</button></div></div><button id="save-client">Save</button><button class="secondary" id="close-client-modal">Cancel</button></div></div>
-<div class="modal" id="prompt-modal"><div class="modal-content"><h2 id="prompt-modal-title">Add Prompt</h2><input type="hidden" id="prompt-client-id-hidden"><input type="hidden" id="edit-prompt-id"><div class="form-group" id="prompt-type-group"><label>Type</label><select id="prompt-type"><option value="text">Text only</option><option value="image">Image generator</option></select></div><div id="text-fields"><div class="form-group"><label>Title</label><input type="text" id="prompt-title"></div><div class="form-group"><label>Link</label><input type="url" id="prompt-link"></div></div><div id="image-fields" style="display:none;"><div class="form-group"><label>Size</label><input type="text" id="prompt-size" placeholder="e.g., 1:1, 4:5"></div><div class="form-group"><label>Topic</label><textarea id="prompt-topic" rows="3"></textarea></div><div class="form-group"><label>Caption</label><textarea id="prompt-caption" rows="3"></textarea></div></div><button id="save-prompt-btn">Save</button><button class="secondary" id="close-prompt-modal">Cancel</button></div></div>
+<!-- Modals (each save button now contains a spinner) -->
+<div class="modal" id="task-modal"><div class="modal-content"><h2>Add Task</h2><div class="form-group"><label>Client</label><select id="task-client"></select></div><div class="form-group"><label>Type</label><select id="task-type"><option value="daily">Daily</option><option value="weekly">Weekly</option><option value="monthly">Monthly</option></select></div><div class="form-group"><label>Task Description</label><input type="text" id="task-text" placeholder="e.g., Check emails"></div><div class="form-group"><label>Assign Employee (optional)</label><select id="task-employee"><option value="">-- None --</option></select></div><button id="save-task"><span class="button-text">Add</span><span class="button-spinner"></span></button><button class="secondary" id="close-task-modal">Cancel</button></div></div>
+<div class="modal" id="edit-task-modal"><div class="modal-content"><h2>Edit Task</h2><input type="hidden" id="edit-task-id"><div class="form-group"><label>Client</label><select id="edit-task-client"></select></div><div class="form-group"><label>Type</label><select id="edit-task-type"><option value="daily">Daily</option><option value="weekly">Weekly</option><option value="monthly">Monthly</option></select></div><div class="form-group"><label>Task Description</label><input type="text" id="edit-task-text"></div><div class="form-group"><label>Assign Employee</label><select id="edit-task-employee"><option value="">-- None --</option></select></div><button id="save-edit-task"><span class="button-text">Save Changes</span><span class="button-spinner"></span></button><button class="secondary" id="close-edit-task-modal">Cancel</button></div></div>
+<div class="modal" id="prio-modal"><div class="modal-content"><h2 id="prio-modal-title">Add Priority Task</h2><input type="hidden" id="prio-edit-id"><div class="form-group"><label>Client</label><select id="prio-client"></select></div><div class="form-group"><label>Description</label><input type="text" id="prio-text" placeholder="Task description"></div><div class="form-group"><label>Urgency</label><select id="prio-urgency"><option value="normal">Normal</option><option value="important">Important</option><option value="critical">Critical</option><option value="urgent">Urgent</option></select></div><div class="form-group"><label>Due Date</label><input type="date" id="prio-date"></div><div class="form-group"><label>Assign Employee (optional)</label><select id="prio-employee"><option value="">-- None --</option></select></div><button id="save-prio"><span class="button-text">Save</span><span class="button-spinner"></span></button><button class="secondary" id="close-prio-modal">Cancel</button></div></div>
+<div class="modal" id="event-modal"><div class="modal-content"><h2 id="event-modal-title">Add Event</h2><input type="hidden" id="event-edit-id"><div class="form-group"><label>Client</label><select id="event-client"></select></div><div class="form-group"><label>Description</label><input type="text" id="event-text" placeholder="Event description"></div><div class="form-group"><label>Date</label><input type="date" id="event-date"></div><div class="form-group"><label>Time</label><input type="time" id="event-time"></div><div class="form-group"><label>Type</label><select id="event-type"><option value="meeting">Meeting</option><option value="interview">Interview</option><option value="other">Other</option></select></div><div class="form-group" id="event-custom-type-group" style="display:none;"><label>Custom Type</label><input type="text" id="event-custom-type" placeholder="e.g., Workshop"></div><div class="form-group"><label>Assign Employee (optional)</label><select id="event-employee"><option value="">-- None --</option></select></div><button id="save-event"><span class="button-text">Save</span><span class="button-spinner"></span></button><button class="secondary" id="close-event-modal">Cancel</button></div></div>
+<div class="modal" id="client-modal"><div class="modal-content"><h2 id="client-modal-title">Add Client</h2><input type="hidden" id="edit-client-id"><div class="form-group"><label>Client Name</label><input type="text" id="client-name"></div><div class="form-group"><label>Work Start Time</label><input type="time" id="client-start"></div><div class="form-group"><label>Work End Time</label><input type="time" id="client-end"></div><div class="form-group"><label>Location / Timezone</label><input type="text" id="client-location" placeholder="e.g., Asia/Manila, Europe/London" list="timezone-list"><datalist id="timezone-list"><option value="Asia/Manila">Philippines</option><option value="America/Los_Angeles">San Francisco</option><option value="America/New_York">New York</option><option value="America/Chicago">Chicago</option><option value="America/Denver">Denver</option><option value="Europe/London">UK - London</option><option value="Europe/Paris">France - Paris</option><option value="Asia/Tokyo">Japan - Tokyo</option><option value="Asia/Dubai">UAE - Dubai</option><option value="Australia/Sydney">Australia - Sydney</option></datalist><small style="color:var(--text-secondary);">Enter a valid IANA timezone (e.g., Europe/Berlin)</small></div><div class="form-group"><label>Color Palette</label><div id="color-list" class="dynamic-list"></div><div class="hex-input-group"><input type="color" id="new-color-picker" value="#3b82f6"><input type="text" id="new-color-hex" placeholder="#3b82f6" maxlength="7" value="#3b82f6"><button id="add-color-btn" class="secondary">Add Color</button></div></div><div class="form-group"><label>Fonts</label><div id="font-list" class="dynamic-list"></div><div style="display:flex; gap:8px; margin-top:5px;"><input type="text" id="new-font" placeholder="Font name (e.g., Open Sans)"><button id="add-font-btn" class="secondary">Add Font</button></div></div><button id="save-client"><span class="button-text">Save</span><span class="button-spinner"></span></button><button class="secondary" id="close-client-modal">Cancel</button></div></div>
+<div class="modal" id="prompt-modal"><div class="modal-content"><h2 id="prompt-modal-title">Add Prompt</h2><input type="hidden" id="prompt-client-id-hidden"><input type="hidden" id="edit-prompt-id"><div class="form-group" id="prompt-type-group"><label>Type</label><select id="prompt-type"><option value="text">Text only</option><option value="image">Image generator</option></select></div><div id="text-fields"><div class="form-group"><label>Title</label><input type="text" id="prompt-title"></div><div class="form-group"><label>Link</label><input type="url" id="prompt-link"></div></div><div id="image-fields" style="display:none;"><div class="form-group"><label>Size</label><input type="text" id="prompt-size" placeholder="e.g., 1:1, 4:5"></div><div class="form-group"><label>Topic</label><textarea id="prompt-topic" rows="3"></textarea></div><div class="form-group"><label>Caption</label><textarea id="prompt-caption" rows="3"></textarea></div></div><button id="save-prompt-btn"><span class="button-text">Save</span><span class="button-spinner"></span></button><button class="secondary" id="close-prompt-modal">Cancel</button></div></div>
 <div class="modal" id="generate-modal"><div class="modal-content"><h2>Generated Prompt</h2><textarea class="prompt-output" id="generated-prompt" readonly></textarea><button id="copy-prompt">Copy to Clipboard</button><button class="secondary" id="close-generate-modal">Close</button></div></div>
 <div class="modal" id="settings-modal"><div class="modal-content" style="max-width:600px;"><h2>Settings</h2><div class="settings-tabs"><button class="settings-tab-btn active" data-setting="design">Design</button><button class="settings-tab-btn" data-setting="employees">Employees</button><button class="settings-tab-btn" data-setting="api">API</button></div><div id="design-panel"><div class="form-group"><label>Select Design</label><select id="design-select"><option value="glass">Glass</option><option value="neon">Neon Pop</option><option value="pastel">Soft Pastel</option><option value="darkpro">Dark Pro</option><option value="nature">Nature Calm</option><option value="minimal">Minimal Clean</option></select></div></div><div id="employees-panel" style="display:none;"><div id="employees-list"></div><button id="add-employee-btn" class="secondary" style="margin-top:12px;">+ Add Employee</button></div><div id="api-panel" style="display:none;"><div class="form-group"><label>Web App URL</label><input type="text" id="api-url" placeholder="https://script.google.com/macros/s/..."></div><button id="save-api-url" class="secondary">Save URL</button></div><button class="secondary" id="close-settings" style="margin-top:20px;">Close</button></div></div>
-<div class="modal" id="employee-modal"><div class="modal-content"><h2 id="employee-modal-title">Add Employee</h2><input type="hidden" id="edit-employee-id"><div class="form-group"><label>Name</label><input type="text" id="employee-name"></div><div class="form-group"><label>Color</label><div class="hex-input-group"><input type="color" id="employee-color-picker" value="#3b82f6"><input type="text" id="employee-color-hex" placeholder="#3b82f6" maxlength="7" value="#3b82f6"></div></div><button id="save-employee">Save</button><button class="secondary" id="close-employee-modal">Cancel</button></div></div>
+<div class="modal" id="employee-modal"><div class="modal-content"><h2 id="employee-modal-title">Add Employee</h2><input type="hidden" id="edit-employee-id"><div class="form-group"><label>Name</label><input type="text" id="employee-name"></div><div class="form-group"><label>Color</label><div class="hex-input-group"><input type="color" id="employee-color-picker" value="#3b82f6"><input type="text" id="employee-color-hex" placeholder="#3b82f6" maxlength="7" value="#3b82f6"></div></div><button id="save-employee"><span class="button-text">Save</span><span class="button-spinner"></span></button><button class="secondary" id="close-employee-modal">Cancel</button></div></div>
 <div class="modal" id="confirm-modal"><div class="modal-content" style="max-width:400px; text-align:center;"><p id="confirm-message"></p><div style="display:flex; gap:12px; justify-content:center;"><button id="confirm-yes">Yes, delete</button><button class="secondary" id="confirm-no">Cancel</button></div></div></div>
 
 <script>
   (function() {
-    // ⚠️ REPLACE THIS WITH YOUR ACTUAL WEB APP URL ⚠️
-    const DEFAULT_API_URL = 'https://script.google.com/macros/s/YOUR_DEPLOYMENT_URL/exec';
-    
+    const DEFAULT_API_URL = 'https://script.google.com/macros/s/AKfycbxI75jpD26QB7SKtFgbB5RIC6OLugs_qZbju96Xn4k5iWmp8OzAj-gKvMXTLh3qmBlv/exec';
     let data = { clients:[], tasks:[], prompts:[], employees:[], design:'glass', webAppUrl:'', lastModified:0, lastModifier:'' };
     let currentFilter = { clientId:'all', employeeId:'all' };
     let calDate = new Date();
@@ -640,12 +664,31 @@
     localStorage.setItem('cm_userId', myUserId);
     let activeUserCount = 0;
     let isRefreshing = false;
+    let isSaving = false;
 
     function getApiUrl() { return localStorage.getItem('clientManagerApiUrl') || DEFAULT_API_URL; }
 
-    // Saving indicator
-    function showSaving() { document.getElementById('saving-toast').classList.add('show'); }
-    function hideSaving() { document.getElementById('saving-toast').classList.remove('show'); }
+    // Full‑screen saving overlay
+    function showSavingOverlay() {
+      isSaving = true;
+      document.getElementById('saving-overlay').style.display = 'flex';
+    }
+    function hideSavingOverlay() {
+      isSaving = false;
+      document.getElementById('saving-overlay').style.display = 'none';
+    }
+
+    // Disable/enable a save button and swap its text/spinner
+    function setButtonSaving(button, saving) {
+      button.disabled = saving;
+      if (saving) {
+        button.querySelector('.button-text').style.display = 'none';
+        button.querySelector('.button-spinner').style.display = 'inline-block';
+      } else {
+        button.querySelector('.button-text').style.display = '';
+        button.querySelector('.button-spinner').style.display = 'none';
+      }
+    }
 
     async function loadAllData() {
       try {
@@ -665,8 +708,10 @@
       data.clients.forEach(c => { if(c.location===undefined) c.location=''; });
     }
 
-    async function saveItem(type, item, operation) {
-      showSaving();
+    // Generic save function with overlay and button handling
+    async function saveItem(type, item, operation, saveButton = null) {
+      if (saveButton) setButtonSaving(saveButton, true);
+      showSavingOverlay();
       try {
         const payload = { type, item, operation, userId: myUserId };
         const res = await fetch(getApiUrl() + '?action=saveItem', {
@@ -677,7 +722,10 @@
         else { data.lastModified = result.lastModified; data.lastModifier = result.lastModifier; }
         return result;
       } catch(e) { alert('Save error: ' + e.message); return {success:false}; }
-      finally { hideSaving(); }
+      finally {
+        hideSavingOverlay();
+        if (saveButton) setButtonSaving(saveButton, false);
+      }
     }
 
     async function sendHeartbeat() {
@@ -691,7 +739,7 @@
       } catch(e) {}
     }
 
-    function showUpdateNotification() { if(!isRefreshing) document.getElementById('update-notification').style.display='flex'; }
+    function showUpdateNotification() { if(!isRefreshing && !isSaving) document.getElementById('update-notification').style.display='flex'; }
     function hideUpdateNotification() { document.getElementById('update-notification').style.display='none'; }
     function showLoadingOverlay() { document.getElementById('loading-overlay').style.display='flex'; }
     function hideLoadingOverlay() { document.getElementById('loading-overlay').style.display='none'; }
@@ -702,7 +750,7 @@
     }
 
     async function checkChanges() {
-      if(isRefreshing) return;
+      if(isRefreshing || isSaving) return;
       try {
         const res = await fetch(getApiUrl() + `?action=checkChanges&lastModified=${data.lastModified}`);
         const result = await res.json();
@@ -752,7 +800,7 @@
       if(sel) sel.value = design;
     }
 
-    // Helpers
+    // ---------- HELPERS (all unchanged) ----------
     function to12h(t) { if(!t) return ''; const [h,m]=t.split(':').map(Number); const ampm=h>=12?'pm':'am'; const h12=h%12||12; return `${h12}:${String(m).padStart(2,'0')}${ampm}`; }
     function tzLabel(tz) { const m={'Asia/Manila':'PH-Manila','America/Los_Angeles':'USA-LA','America/New_York':'USA-NY','America/Chicago':'USA-CHI','America/Denver':'USA-DEN','Europe/London':'UK-London','Europe/Paris':'FR-Paris','Asia/Tokyo':'JP-Tokyo','Asia/Dubai':'UAE-Dubai','Australia/Sydney':'AU-Sydney'}; return m[tz]||tz.replace(/_/g,' ').split('/').pop(); }
     function updatePHClock() { const el=document.getElementById('ph-clock'); if(!el) return; const now=new Date(); el.innerHTML=`🇵🇭 ${new Intl.DateTimeFormat('en-US',{timeZone:'Asia/Manila',hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:true}).format(now)}`; }
@@ -766,15 +814,15 @@
     function getFirstOfMonth(d) { const dt=new Date(d); return `${dt.getFullYear()}-${String(dt.getMonth()+1).padStart(2,'0')}-01`; }
     function getEmployeeById(id) { return data.employees.find(e=>e.id==id); }
     function populateEmployeeSelect(sel, selId=null) { sel.innerHTML='<option value="">-- None --</option>'+data.employees.map(e=>`<option value="${e.id}" ${e.id==selId?'selected':''}>${e.name}</option>`).join(''); }
-    function showConfirm(msg, cb) { 
-      const modal=document.getElementById('confirm-modal'); 
-      document.getElementById('confirm-message').textContent=msg; 
-      modal.classList.add('active'); 
-      function close(){ modal.classList.remove('active'); document.getElementById('confirm-yes').removeEventListener('click',yes); document.getElementById('confirm-no').removeEventListener('click',no); } 
-      function yes(){ close(); if(cb) cb(); } 
-      function no(){ close(); } 
-      document.getElementById('confirm-yes').addEventListener('click',yes); 
-      document.getElementById('confirm-no').addEventListener('click',no); 
+    function showConfirm(msg, cb) {
+      const modal=document.getElementById('confirm-modal');
+      document.getElementById('confirm-message').textContent=msg;
+      modal.classList.add('active');
+      function close(){ modal.classList.remove('active'); document.getElementById('confirm-yes').removeEventListener('click',yes); document.getElementById('confirm-no').removeEventListener('click',no); }
+      function yes(){ close(); if(cb) cb(); }
+      function no(){ close(); }
+      document.getElementById('confirm-yes').addEventListener('click',yes);
+      document.getElementById('confirm-no').addEventListener('click',no);
     }
 
     async function resetTasks() {
@@ -809,7 +857,7 @@
     }
     document.querySelectorAll('.tab-btn').forEach(btn=>btn.addEventListener('click',()=>switchTab(btn.dataset.tab)));
 
-    // Calendar rendering
+    // ---------- CALENDAR RENDERING ----------
     function getEventsForDate(d) { return data.tasks.filter(t=>(t.type==='priority' && t.dueDate===d) || (t.type==='event' && t.eventDate===d)); }
     function renderCalendarTab() {
       const year=calDate.getFullYear(), month=calDate.getMonth();
@@ -855,7 +903,7 @@
     document.getElementById('cal-prev-month').addEventListener('click',()=>{ calDate.setMonth(calDate.getMonth()-1); renderCalendarTab(); });
     document.getElementById('cal-next-month').addEventListener('click',()=>{ calDate.setMonth(calDate.getMonth()+1); renderCalendarTab(); });
 
-    // Dashboard rendering
+    // ---------- DASHBOARD RENDERING ----------
     function renderDashboard() { resetTasks(); renderTodayTasks(); renderPriorityToday(); renderUpcomingEvents(); renderClientTaskLists(); populateFilterDropdowns(); }
     function filterTasks(tasks) {
       if (currentFilter.clientId !== 'all') tasks = tasks.filter(t => t.clientId === currentFilter.clientId);
@@ -988,57 +1036,61 @@
       });
     }
 
-    // Add/Edit task/priority/event handlers
+    // ---------- ADD / EDIT TASK, PRIO, EVENT (now using saveItem with button) ----------
     document.getElementById('add-task-btn').addEventListener('click',()=>{ populateClientSelect(document.getElementById('task-client')); populateEmployeeSelect(document.getElementById('task-employee')); document.getElementById('task-text').value=''; document.getElementById('task-modal').classList.add('active'); });
-    document.getElementById('add-prio-btn').addEventListener('click',()=>{ document.getElementById('prio-edit-id').value=''; document.getElementById('prio-modal-title').textContent='Add Priority Task'; document.getElementById('save-prio').textContent='Add'; populateClientSelect(document.getElementById('prio-client')); populateEmployeeSelect(document.getElementById('prio-employee')); document.getElementById('prio-text').value=''; document.getElementById('prio-urgency').value='normal'; document.getElementById('prio-date').value=''; document.getElementById('prio-modal').classList.add('active'); });
-    document.getElementById('add-event-btn').addEventListener('click',()=>{ document.getElementById('event-edit-id').value=''; document.getElementById('event-modal-title').textContent='Add Event'; document.getElementById('save-event').textContent='Add'; populateClientSelect(document.getElementById('event-client')); populateEmployeeSelect(document.getElementById('event-employee')); document.getElementById('event-text').value=''; document.getElementById('event-date').value=''; document.getElementById('event-time').value=''; document.getElementById('event-type').value='meeting'; document.getElementById('event-custom-type').value=''; document.getElementById('event-custom-type-group').style.display='none'; document.getElementById('event-modal').classList.add('active'); });
+    document.getElementById('add-prio-btn').addEventListener('click',()=>{ document.getElementById('prio-edit-id').value=''; document.getElementById('prio-modal-title').textContent='Add Priority Task'; document.getElementById('save-prio').querySelector('.button-text').textContent='Add'; populateClientSelect(document.getElementById('prio-client')); populateEmployeeSelect(document.getElementById('prio-employee')); document.getElementById('prio-text').value=''; document.getElementById('prio-urgency').value='normal'; document.getElementById('prio-date').value=''; document.getElementById('prio-modal').classList.add('active'); });
+    document.getElementById('add-event-btn').addEventListener('click',()=>{ document.getElementById('event-edit-id').value=''; document.getElementById('event-modal-title').textContent='Add Event'; document.getElementById('save-event').querySelector('.button-text').textContent='Add'; populateClientSelect(document.getElementById('event-client')); populateEmployeeSelect(document.getElementById('event-employee')); document.getElementById('event-text').value=''; document.getElementById('event-date').value=''; document.getElementById('event-time').value=''; document.getElementById('event-type').value='meeting'; document.getElementById('event-custom-type').value=''; document.getElementById('event-custom-type-group').style.display='none'; document.getElementById('event-modal').classList.add('active'); });
     document.getElementById('event-type').addEventListener('change',function(){ document.getElementById('event-custom-type-group').style.display = this.value==='other'?'block':'none'; });
 
     document.getElementById('save-prio').addEventListener('click', async ()=>{
+      const btn = document.getElementById('save-prio');
       const editId=document.getElementById('prio-edit-id').value, clientId=document.getElementById('prio-client').value, text=document.getElementById('prio-text').value.trim(), urgency=document.getElementById('prio-urgency').value, dueDate=document.getElementById('prio-date').value, empId=document.getElementById('prio-employee').value||null;
       if(!clientId||!text) return alert('Please fill all fields');
       const task = { id: editId || Date.now().toString(), clientId, type:'priority', text, urgency, dueDate, completed:false, employeeId:empId };
       const op = editId ? 'update' : 'add';
       if(editId){ const existing = data.tasks.find(t=>t.id==editId); if(existing) task.completed = existing.completed; }
-      await saveItem('task', task, op);
+      await saveItem('task', task, op, btn);
       if(op==='add') data.tasks.push(task); else data.tasks = data.tasks.map(t=>t.id===task.id?task:t);
       document.getElementById('prio-modal').classList.remove('active');
       renderDashboard();
     });
 
     document.getElementById('save-event').addEventListener('click', async ()=>{
+      const btn = document.getElementById('save-event');
       const editId=document.getElementById('event-edit-id').value, clientId=document.getElementById('event-client').value, text=document.getElementById('event-text').value.trim(), eventDate=document.getElementById('event-date').value, eventTime=document.getElementById('event-time').value, empId=document.getElementById('event-employee').value||null;
       let eventType=document.getElementById('event-type').value;
       if(eventType==='other'){ const custom=document.getElementById('event-custom-type').value.trim(); if(!custom) return alert('Please fill custom event type'); eventType=custom; }
       if(!clientId||!text) return alert('Please fill all fields');
       const task = { id: editId || Date.now().toString(), clientId, type:'event', text, eventDate, eventTime, eventType, completed:false, employeeId:empId };
       const op = editId ? 'update' : 'add';
-      await saveItem('task', task, op);
+      await saveItem('task', task, op, btn);
       if(op==='add') data.tasks.push(task); else data.tasks = data.tasks.map(t=>t.id===task.id?task:t);
       document.getElementById('event-modal').classList.remove('active');
       renderDashboard();
     });
 
-    function openEditPrioModal(taskId){ const task=data.tasks.find(t=>t.id==taskId); if(!task) return; document.getElementById('prio-edit-id').value=task.id; document.getElementById('prio-modal-title').textContent='Edit Priority Task'; document.getElementById('save-prio').textContent='Update'; populateClientSelect(document.getElementById('prio-client'),task.clientId); populateEmployeeSelect(document.getElementById('prio-employee'),task.employeeId); document.getElementById('prio-text').value=task.text; document.getElementById('prio-urgency').value=task.urgency||'normal'; document.getElementById('prio-date').value=task.dueDate||''; document.getElementById('prio-modal').classList.add('active'); }
-    function openEditEventModal(taskId){ const task=data.tasks.find(t=>t.id==taskId); if(!task) return; document.getElementById('event-edit-id').value=task.id; document.getElementById('event-modal-title').textContent='Edit Event'; document.getElementById('save-event').textContent='Update'; populateClientSelect(document.getElementById('event-client'),task.clientId); populateEmployeeSelect(document.getElementById('event-employee'),task.employeeId); document.getElementById('event-text').value=task.text; document.getElementById('event-date').value=task.eventDate||''; document.getElementById('event-time').value=task.eventTime||''; if(task.eventType && !['meeting','interview','other'].includes(task.eventType)){ document.getElementById('event-type').value='other'; document.getElementById('event-custom-type').value=task.eventType; document.getElementById('event-custom-type-group').style.display='block'; } else { document.getElementById('event-type').value=task.eventType||'meeting'; document.getElementById('event-custom-type').value=''; document.getElementById('event-custom-type-group').style.display='none'; } document.getElementById('event-modal').classList.add('active'); }
+    function openEditPrioModal(taskId){ const task=data.tasks.find(t=>t.id==taskId); if(!task) return; document.getElementById('prio-edit-id').value=task.id; document.getElementById('prio-modal-title').textContent='Edit Priority Task'; document.getElementById('save-prio').querySelector('.button-text').textContent='Update'; populateClientSelect(document.getElementById('prio-client'),task.clientId); populateEmployeeSelect(document.getElementById('prio-employee'),task.employeeId); document.getElementById('prio-text').value=task.text; document.getElementById('prio-urgency').value=task.urgency||'normal'; document.getElementById('prio-date').value=task.dueDate||''; document.getElementById('prio-modal').classList.add('active'); }
+    function openEditEventModal(taskId){ const task=data.tasks.find(t=>t.id==taskId); if(!task) return; document.getElementById('event-edit-id').value=task.id; document.getElementById('event-modal-title').textContent='Edit Event'; document.getElementById('save-event').querySelector('.button-text').textContent='Update'; populateClientSelect(document.getElementById('event-client'),task.clientId); populateEmployeeSelect(document.getElementById('event-employee'),task.employeeId); document.getElementById('event-text').value=task.text; document.getElementById('event-date').value=task.eventDate||''; document.getElementById('event-time').value=task.eventTime||''; if(task.eventType && !['meeting','interview','other'].includes(task.eventType)){ document.getElementById('event-type').value='other'; document.getElementById('event-custom-type').value=task.eventType; document.getElementById('event-custom-type-group').style.display='block'; } else { document.getElementById('event-type').value=task.eventType||'meeting'; document.getElementById('event-custom-type').value=''; document.getElementById('event-custom-type-group').style.display='none'; } document.getElementById('event-modal').classList.add('active'); }
     function openEditTaskModal(taskId){ const task=data.tasks.find(t=>t.id==taskId); if(!task) return; document.getElementById('edit-task-id').value=task.id; populateClientSelect(document.getElementById('edit-task-client'),task.clientId); document.getElementById('edit-task-type').value=task.type; document.getElementById('edit-task-text').value=task.text; populateEmployeeSelect(document.getElementById('edit-task-employee'),task.employeeId); document.getElementById('edit-task-modal').classList.add('active'); }
 
     document.getElementById('close-edit-task-modal').addEventListener('click',()=>document.getElementById('edit-task-modal').classList.remove('active'));
     document.getElementById('save-edit-task').addEventListener('click', async ()=>{
+      const btn = document.getElementById('save-edit-task');
       const id=document.getElementById('edit-task-id').value; const task=data.tasks.find(t=>t.id==id); if(!task) return;
       task.clientId=document.getElementById('edit-task-client').value; task.type=document.getElementById('edit-task-type').value; task.text=document.getElementById('edit-task-text').value.trim(); task.employeeId=document.getElementById('edit-task-employee').value||null;
       if(!task.clientId||!task.text) return alert('Please fill all fields');
       task.lastReset = task.type==='daily'?getTodayDateStr():task.type==='weekly'?getMonday(new Date()):getFirstOfMonth(new Date());
       task.completed = false;
-      await saveItem('task', task, 'update');
+      await saveItem('task', task, 'update', btn);
       document.getElementById('edit-task-modal').classList.remove('active');
       renderDashboard();
     });
     document.getElementById('save-task').addEventListener('click', async ()=>{
+      const btn = document.getElementById('save-task');
       const clientId=document.getElementById('task-client').value, type=document.getElementById('task-type').value, text=document.getElementById('task-text').value.trim(), empId=document.getElementById('task-employee').value||null;
       if(!clientId||!text) return alert('Please fill all fields');
       const task = { id: Date.now().toString(), clientId, type, text, completed:false, employeeId:empId, lastReset: type==='daily'?getTodayDateStr():type==='weekly'?getMonday(new Date()):getFirstOfMonth(new Date()) };
-      await saveItem('task', task, 'add');
+      await saveItem('task', task, 'add', btn);
       data.tasks.push(task);
       document.getElementById('task-modal').classList.remove('active');
       renderDashboard();
@@ -1047,7 +1099,7 @@
     document.getElementById('close-prio-modal').addEventListener('click',()=>document.getElementById('prio-modal').classList.remove('active'));
     document.getElementById('close-event-modal').addEventListener('click',()=>document.getElementById('event-modal').classList.remove('active'));
 
-    // Clients
+    // ---------- CLIENTS RENDERING ----------
     function renderClients() {
       const cont=document.getElementById('clients-list');
       if(!data.clients.length){ cont.innerHTML='<p>No clients yet.</p>'; return; }
@@ -1094,7 +1146,6 @@
     function renderDynamicList(contId,items,removeFn){
       const cont=document.getElementById(contId);
       if(contId==='color-list'){
-        // Show only colored squares, no hex text
         cont.innerHTML = items.map((it, idx) => `
           <span class="tag" style="padding: 2px 6px; gap: 4px;">
             <span class="color-swatch" style="background: ${it};" title="${it}"></span>
@@ -1117,11 +1168,12 @@
     document.getElementById('add-color-btn').addEventListener('click',()=>{ const hex=document.getElementById('new-color-hex').value.trim(); if(/^#[0-9a-fA-F]{6}$/.test(hex) && !modalColors.includes(hex)){ modalColors.push(hex); renderDynamicList('color-list',modalColors,i=>modalColors.splice(i,1)); document.getElementById('new-color-picker').value='#3b82f6'; document.getElementById('new-color-hex').value='#3b82f6'; } else alert('Invalid or duplicate color'); });
     document.getElementById('add-font-btn').addEventListener('click',()=>{ const font=document.getElementById('new-font').value.trim(); if(font && !modalFonts.includes(font)){ modalFonts.push(font); renderDynamicList('font-list',modalFonts,i=>modalFonts.splice(i,1)); document.getElementById('new-font').value=''; } });
     document.getElementById('save-client').addEventListener('click', async ()=>{
+      const btn = document.getElementById('save-client');
       const id=document.getElementById('edit-client-id').value, name=document.getElementById('client-name').value.trim(), start=document.getElementById('client-start').value, end=document.getElementById('client-end').value, loc=document.getElementById('client-location').value.trim();
       if(!name||!start||!end) return alert('Name and work hours required');
       const client = { id: id||Date.now().toString(), name, workStart:start, workEnd:end, location:loc, colors:[...modalColors], fonts:[...modalFonts] };
       const op = id ? 'update' : 'add';
-      await saveItem('client', client, op);
+      await saveItem('client', client, op, btn);
       if(op==='add') data.clients.push(client); else data.clients = data.clients.map(c=>c.id===client.id?client:c);
       document.getElementById('client-modal').classList.remove('active');
       renderClients(); renderDashboard(); renderPromptTab();
@@ -1200,7 +1252,7 @@
         document.getElementById('prompt-type').value = 'text';
         document.getElementById('text-fields').style.display = 'block';
         document.getElementById('image-fields').style.display = 'none';
-        document.getElementById('save-prompt-btn').textContent = 'Update';
+        document.getElementById('save-prompt-btn').querySelector('.button-text').textContent = 'Update';
         document.getElementById('prompt-title').value = prompt.title;
         document.getElementById('prompt-link').value = prompt.link;
       } else {
@@ -1209,7 +1261,7 @@
         document.getElementById('prompt-type').value = type;
         document.getElementById('text-fields').style.display = type === 'text' ? 'block' : 'none';
         document.getElementById('image-fields').style.display = type === 'image' ? 'block' : 'none';
-        document.getElementById('save-prompt-btn').textContent = type === 'image' ? 'Generate' : 'Save';
+        document.getElementById('save-prompt-btn').querySelector('.button-text').textContent = type === 'image' ? 'Generate' : 'Save';
         document.getElementById('prompt-title').value = '';
         document.getElementById('prompt-link').value = '';
         document.getElementById('prompt-size').value = '';
@@ -1227,6 +1279,7 @@
     });
 
     document.getElementById('save-prompt-btn').addEventListener('click', async () => {
+      const btn = document.getElementById('save-prompt-btn');
       const editId = document.getElementById('edit-prompt-id').value;
       const clientId = document.getElementById('prompt-client-id-hidden').value;
       const type = document.getElementById('prompt-type').value;
@@ -1239,7 +1292,7 @@
         if (!title || !link) return alert('Title and Link required');
         p.title = title;
         p.link = link;
-        await saveItem('prompt', p, 'update');
+        await saveItem('prompt', p, 'update', btn);
         document.getElementById('prompt-modal').classList.remove('active');
         document.getElementById('edit-prompt-id').value = '';
         renderPromptTab();
@@ -1249,7 +1302,7 @@
           const link = document.getElementById('prompt-link').value.trim();
           if (!title || !link) return alert('Title and Link required');
           const prompt = { id: Date.now().toString(), clientId, type, title, link };
-          await saveItem('prompt', prompt, 'add');
+          await saveItem('prompt', prompt, 'add', btn);
           data.prompts.push(prompt);
           document.getElementById('prompt-modal').classList.remove('active');
           renderPromptTab();
@@ -1289,7 +1342,7 @@
       sel.innerHTML = '<option value="">-- Choose --</option>' + data.clients.map(c => `<option value="${c.id}" ${c.id === selId ? 'selected' : ''}>${c.name}</option>`).join('');
     }
 
-    // Employees in settings
+    // ---------- EMPLOYEES IN SETTINGS ----------
     function renderSettingsEmployees() {
       const list = document.getElementById('employees-list');
       if (!data.employees.length) { list.innerHTML = '<p>No employees added.</p>'; return; }
@@ -1334,6 +1387,7 @@
     document.getElementById('add-employee-btn').addEventListener('click', () => openEmployeeModal());
     document.getElementById('close-employee-modal').addEventListener('click', () => document.getElementById('employee-modal').classList.remove('active'));
     document.getElementById('save-employee').addEventListener('click', async () => {
+      const btn = document.getElementById('save-employee');
       const id = document.getElementById('edit-employee-id').value;
       const name = document.getElementById('employee-name').value.trim();
       const color = document.getElementById('employee-color-hex').value.trim();
@@ -1341,7 +1395,7 @@
       if (!/^#[0-9a-fA-F]{6}$/.test(color)) return alert('Please enter a valid hex color');
       const employee = { id: id || Date.now().toString(), name, color };
       const op = id ? 'update' : 'add';
-      await saveItem('employee', employee, op);
+      await saveItem('employee', employee, op, btn);
       if (op === 'add') data.employees.push(employee);
       else data.employees = data.employees.map(e => e.id === employee.id ? employee : e);
       document.getElementById('employee-modal').classList.remove('active');
@@ -1357,7 +1411,7 @@
       populateEmployeeSelect(document.getElementById('event-employee'));
     }
 
-    // Settings modal
+    // ---------- SETTINGS MODAL ----------
     document.getElementById('open-settings').addEventListener('click', () => {
       document.getElementById('settings-modal').classList.add('active');
       renderSettingsEmployees();
@@ -1401,7 +1455,7 @@
       if (setting === 'employees') renderSettingsEmployees();
     }));
 
-    // Initial load
+    // ---------- INITIAL LOAD ----------
     (async function init() {
       await loadAllData();
       applyDesign(data.design);
