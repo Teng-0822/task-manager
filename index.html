@@ -749,10 +749,7 @@
     <button id="send-chat">➤</button>
   </div>
 </div>
-
 <!-- ================== MODALS ================== -->
-<!-- (Part 2 starts here – including all modals and JavaScript) -->
-  <!-- ================== MODALS ================== -->
 <!-- Task Modal -->
 <div class="modal" id="task-modal"><div class="modal-content"><h2>Add Task</h2><div class="form-group"><label>Client</label><select id="task-client"></select></div><div class="form-group"><label>Type</label><select id="task-type"><option value="daily">Daily</option><option value="weekly">Weekly</option><option value="monthly">Monthly</option></select></div><div class="form-group"><label>Task Description</label><input type="text" id="task-text" placeholder="e.g., Check emails"></div><div class="form-group"><label>Assign Employee (optional)</label><select id="task-employee"><option value="">-- None --</option></select></div><button id="save-task"><span class="button-text">Add</span><span class="button-spinner"></span></button><button class="secondary" id="close-task-modal">Cancel</button></div></div>
 
@@ -807,9 +804,21 @@
   </div>
 </div>
 
+<!-- Name Selection Modal -->
+<div class="modal" id="name-modal">
+  <div class="modal-content" style="max-width:400px; text-align:center;">
+    <h2>Who are you?</h2>
+    <div class="form-group">
+      <label>Select your name for chat</label>
+      <select id="user-name-select"></select>
+    </div>
+    <button id="save-user-name">Save</button>
+  </div>
+</div>
+
 <script>
   (function() {
-    const DEFAULT_API_URL = 'https://script.google.com/macros/s/AKfycbwhmuB4WbpV9pgCILXU4KkdV4GW-IDFslLjGmm1hzFcZXjx158yLNjlxUqLiU8goI6m/exec';
+    const DEFAULT_API_URL = 'https://script.google.com/macros/s/AKfycby0AtTSgkRhCGg1MnvVY43D7MuKs83N-2To8lKlmMWbNtORMwxnqYnBtddxwDuJkspF/exec';
     let data = { clients:[], tasks:[], prompts:[], employees:[], notes:[], chatMessages:[], design:'glass', webAppUrl:'', lastModified:0, lastModifier:'' };
     let currentFilter = { clientId:'all', employeeId:'all' };
     let calDate = new Date();
@@ -820,6 +829,7 @@
     let activeUserCount = 0;
     let isRefreshing = false;
     let isSaving = false;
+    let chatUserName = localStorage.getItem('cm_userName') || '';
 
     function getApiUrl() { return localStorage.getItem('clientManagerApiUrl') || DEFAULT_API_URL; }
 
@@ -1643,7 +1653,7 @@
         id: editId || Date.now().toString(),
         content: content,
         color: color,
-        author: 'You'
+        author: chatUserName || 'You'
       };
 
       const op = editId ? 'update' : 'add';
@@ -1663,7 +1673,26 @@
     const chatMessages = document.getElementById('chat-messages');
     const chatInput = document.getElementById('chat-input');
 
+    function showNameModalIfNeeded() {
+      if (!chatUserName) {
+        const sel = document.getElementById('user-name-select');
+        sel.innerHTML = data.employees.map(e => `<option value="${e.name}">${e.name}</option>`).join('');
+        document.getElementById('name-modal').classList.add('active');
+      }
+    }
+
+    document.getElementById('save-user-name').addEventListener('click', () => {
+      const sel = document.getElementById('user-name-select');
+      chatUserName = sel.value || 'Anonymous';
+      localStorage.setItem('cm_userName', chatUserName);
+      document.getElementById('name-modal').classList.remove('active');
+    });
+
     document.getElementById('chat-bubble').addEventListener('click', () => {
+      if (!chatUserName) {
+        showNameModalIfNeeded();
+        return;
+      }
       chatPanel.classList.toggle('open');
       if (chatPanel.classList.contains('open')) {
         unreadCount = 0;
@@ -1691,16 +1720,19 @@
     }
 
     document.getElementById('send-chat').addEventListener('click', async () => {
+      if (!chatUserName) {
+        showNameModalIfNeeded();
+        return;
+      }
       const text = chatInput.value.trim();
       if (!text) return;
       await fetch(getApiUrl() + '?action=sendMessage', {
         method:'POST',
-        body: JSON.stringify({ text, userId: myUserId, userName: 'You' })
+        body: JSON.stringify({ text, userId: myUserId, userName: chatUserName })
       });
       chatInput.value = '';
     });
 
-    // Start chat polling and initial load
     async function startChatPolling() {
       try {
         const res = await fetch(`${getApiUrl()}?action=getMessages&since=0`);
