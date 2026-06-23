@@ -749,7 +749,7 @@
     <button id="send-chat">➤</button>
   </div>
 </div>
-<!-- ================== MODALS ================== -->
+<!-- ================== MODALS ================== --><!-- ================== MODALS ================== -->
 <!-- Task Modal -->
 <div class="modal" id="task-modal"><div class="modal-content"><h2>Add Task</h2><div class="form-group"><label>Client</label><select id="task-client"></select></div><div class="form-group"><label>Type</label><select id="task-type"><option value="daily">Daily</option><option value="weekly">Weekly</option><option value="monthly">Monthly</option></select></div><div class="form-group"><label>Task Description</label><input type="text" id="task-text" placeholder="e.g., Check emails"></div><div class="form-group"><label>Assign Employee (optional)</label><select id="task-employee"><option value="">-- None --</option></select></div><button id="save-task"><span class="button-text">Add</span><span class="button-spinner"></span></button><button class="secondary" id="close-task-modal">Cancel</button></div></div>
 
@@ -780,25 +780,13 @@
 <!-- Confirm Modal -->
 <div class="modal" id="confirm-modal"><div class="modal-content" style="max-width:400px; text-align:center;"><p id="confirm-message"></p><div style="display:flex; gap:12px; justify-content:center;"><button id="confirm-yes">Yes, delete</button><button class="secondary" id="confirm-no">Cancel</button></div></div></div>
 
-<!-- Note Modal (NEW) -->
+<!-- Note Modal -->
 <div class="modal" id="note-modal">
   <div class="modal-content">
     <h2 id="note-modal-title">Add Note</h2>
     <input type="hidden" id="edit-note-id">
-    <div class="form-group">
-      <label>Content</label>
-      <textarea id="note-content" rows="4"></textarea>
-    </div>
-    <div class="form-group">
-      <label>Color</label>
-      <select id="note-color">
-        <option value="#fef3c7">Yellow</option>
-        <option value="#ffe0e0">Pink</option>
-        <option value="#d1fae5">Green</option>
-        <option value="#e0e7ff">Blue</option>
-        <option value="#f5d0fe">Purple</option>
-      </select>
-    </div>
+    <div class="form-group"><label>Content</label><textarea id="note-content" rows="4"></textarea></div>
+    <div class="form-group"><label>Color</label><select id="note-color"><option value="#fef3c7">Yellow</option><option value="#ffe0e0">Pink</option><option value="#d1fae5">Green</option><option value="#e0e7ff">Blue</option><option value="#f5d0fe">Purple</option></select></div>
     <button id="save-note"><span class="button-text">Add</span><span class="button-spinner"></span></button>
     <button class="secondary" id="close-note-modal">Cancel</button>
   </div>
@@ -808,10 +796,7 @@
 <div class="modal" id="name-modal">
   <div class="modal-content" style="max-width:400px; text-align:center;">
     <h2>Who are you?</h2>
-    <div class="form-group">
-      <label>Select your name for chat</label>
-      <select id="user-name-select"></select>
-    </div>
+    <div class="form-group"><label>Select your name for chat</label><select id="user-name-select"></select></div>
     <button id="save-user-name">Save</button>
   </div>
 </div>
@@ -1340,7 +1325,7 @@
     document.getElementById('add-client-btn').addEventListener('click',()=>openClientModal());
     document.getElementById('close-client-modal').addEventListener('click',()=>document.getElementById('client-modal').classList.remove('active'));
 
-    // ---------- AI PROMPTS (redesigned) ----------
+    // ---------- AI PROMPTS (fixed – removed inline onclick) ----------
     function renderPromptTab() {
       const cont = document.getElementById('prompts-clients-grid');
       if (!data.clients.length) { cont.innerHTML = '<p>No clients yet.</p>'; return; }
@@ -1356,7 +1341,7 @@
             <div class="prompt-body">
               <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
                 <span style="font-weight:600; font-size:14px;">📄 Text Prompts (${textPrompts.length})</span>
-                <button class="secondary" style="padding:6px 14px; font-size:12px;" onclick="openPromptModal('${c.id}','text')">+ Add Text</button>
+                <button class="secondary add-text-prompt-btn" data-client-id="${c.id}" style="padding:6px 14px; font-size:12px;">+ Add Text</button>
               </div>
               ${textPrompts.length ? textPrompts.map(p => `
                 <div class="prompt-link">
@@ -1368,7 +1353,7 @@
                 </div>`).join('') : '<p style="color:var(--text-secondary); font-size:13px;">No text prompts saved.</p>'}
               <div style="margin-top:18px; display:flex; justify-content:space-between; align-items:center;">
                 <span style="font-weight:600; font-size:14px;">🖼️ Image Prompts (${imagePrompts.length})</span>
-                <button class="secondary" style="padding:6px 14px; font-size:12px;" onclick="openPromptModal('${c.id}','image')">+ Add Image</button>
+                <button class="secondary add-image-prompt-btn" data-client-id="${c.id}" style="padding:6px 14px; font-size:12px;">+ Add Image</button>
               </div>
               ${imagePrompts.length ? '<p style="color:var(--text-secondary); font-size:13px; margin-top:8px;">Image prompts cannot be displayed inline – they are generated via the prompt builder.</p>' : ''}
             </div>
@@ -1664,7 +1649,7 @@
       renderNotes();
     });
 
-    // ---------- CHAT ----------
+    // ---------- CHAT (real‑time updates) ----------
     let chatLastTs = 0;
     let unreadCount = 0;
     const chatBubble = document.getElementById('chat-bubble');
@@ -1733,7 +1718,9 @@
       chatInput.value = '';
     });
 
+    // Single polling loop for chat – works whether panel is open or closed
     async function startChatPolling() {
+      // initial load
       try {
         const res = await fetch(`${getApiUrl()}?action=getMessages&since=0`);
         const initialData = await res.json();
@@ -1742,19 +1729,22 @@
           chatLastTs = initialData.latest;
         }
       } catch(e) {}
+      // continuous poll
       setInterval(async () => {
-        if (!chatPanel.classList.contains('open')) {
-          try {
-            const res = await fetch(`${getApiUrl()}?action=getMessages&since=${chatLastTs}`);
-            const newData = await res.json();
-            if (newData.messages.length) {
+        try {
+          const res = await fetch(`${getApiUrl()}?action=getMessages&since=${chatLastTs}`);
+          const newData = await res.json();
+          if (newData.messages.length) {
+            if (chatPanel.classList.contains('open')) {
+              newData.messages.forEach(msg => appendChatMessage(msg));
+            } else {
               unreadCount += newData.messages.length;
               chatBadge.textContent = unreadCount > 9 ? '9+' : unreadCount;
               chatBadge.style.display = 'flex';
-              chatLastTs = newData.latest;
             }
-          } catch(e) {}
-        }
+            chatLastTs = newData.latest;
+          }
+        } catch(e) {}
       }, 3000);
     }
 
