@@ -542,6 +542,11 @@
       background: none; border:none; color:var(--text-secondary);
       cursor:pointer; font-size:18px;
     }
+    .sticky-note .edit-note {
+      position:absolute; top:8px; right:32px;
+      background: none; border:none; color:var(--text-secondary);
+      cursor:pointer; font-size:16px;
+    }
     .add-note-btn { margin-bottom:20px; }
 
     /* Chat widget */
@@ -642,7 +647,8 @@
     <span>🔄 Your co-worker updated the list.</span>
     <button id="refresh-now-btn" style="background:#f59e0b; color:white; border:none; border-radius:30px; padding:8px 18px; cursor:pointer; font-weight:500;">↻ Refresh now</button>
   </div>
-  <div class="app">
+
+<div class="app">
   <!-- Sidebar -->
   <div class="sidebar">
     <div class="logo">📋 Task Manager</div>
@@ -743,21 +749,67 @@
     <button id="send-chat">➤</button>
   </div>
 </div>
+
 <!-- ================== MODALS ================== -->
+<!-- (Part 2 starts here – including all modals and JavaScript) -->
+  <!-- ================== MODALS ================== -->
+<!-- Task Modal -->
 <div class="modal" id="task-modal"><div class="modal-content"><h2>Add Task</h2><div class="form-group"><label>Client</label><select id="task-client"></select></div><div class="form-group"><label>Type</label><select id="task-type"><option value="daily">Daily</option><option value="weekly">Weekly</option><option value="monthly">Monthly</option></select></div><div class="form-group"><label>Task Description</label><input type="text" id="task-text" placeholder="e.g., Check emails"></div><div class="form-group"><label>Assign Employee (optional)</label><select id="task-employee"><option value="">-- None --</option></select></div><button id="save-task"><span class="button-text">Add</span><span class="button-spinner"></span></button><button class="secondary" id="close-task-modal">Cancel</button></div></div>
+
+<!-- Edit Task Modal -->
 <div class="modal" id="edit-task-modal"><div class="modal-content"><h2>Edit Task</h2><input type="hidden" id="edit-task-id"><div class="form-group"><label>Client</label><select id="edit-task-client"></select></div><div class="form-group"><label>Type</label><select id="edit-task-type"><option value="daily">Daily</option><option value="weekly">Weekly</option><option value="monthly">Monthly</option></select></div><div class="form-group"><label>Task Description</label><input type="text" id="edit-task-text"></div><div class="form-group"><label>Assign Employee</label><select id="edit-task-employee"><option value="">-- None --</option></select></div><button id="save-edit-task"><span class="button-text">Save Changes</span><span class="button-spinner"></span></button><button class="secondary" id="close-edit-task-modal">Cancel</button></div></div>
+
+<!-- Priority Modal -->
 <div class="modal" id="prio-modal"><div class="modal-content"><h2 id="prio-modal-title">Add Priority Task</h2><input type="hidden" id="prio-edit-id"><div class="form-group"><label>Client</label><select id="prio-client"></select></div><div class="form-group"><label>Description</label><input type="text" id="prio-text" placeholder="Task description"></div><div class="form-group"><label>Urgency</label><select id="prio-urgency"><option value="normal">Normal</option><option value="important">Important</option><option value="critical">Critical</option><option value="urgent">Urgent</option></select></div><div class="form-group"><label>Due Date</label><input type="date" id="prio-date"></div><div class="form-group"><label>Assign Employee (optional)</label><select id="prio-employee"><option value="">-- None --</option></select></div><button id="save-prio"><span class="button-text">Save</span><span class="button-spinner"></span></button><button class="secondary" id="close-prio-modal">Cancel</button></div></div>
+
+<!-- Event Modal -->
 <div class="modal" id="event-modal"><div class="modal-content"><h2 id="event-modal-title">Add Event</h2><input type="hidden" id="event-edit-id"><div class="form-group"><label>Client</label><select id="event-client"></select></div><div class="form-group"><label>Description</label><input type="text" id="event-text" placeholder="Event description"></div><div class="form-group"><label>Date</label><input type="date" id="event-date"></div><div class="form-group"><label>Time</label><input type="time" id="event-time"></div><div class="form-group"><label>Type</label><select id="event-type"><option value="meeting">Meeting</option><option value="interview">Interview</option><option value="other">Other</option></select></div><div class="form-group" id="event-custom-type-group" style="display:none;"><label>Custom Type</label><input type="text" id="event-custom-type" placeholder="e.g., Workshop"></div><div class="form-group"><label>Assign Employee (optional)</label><select id="event-employee"><option value="">-- None --</option></select></div><button id="save-event"><span class="button-text">Save</span><span class="button-spinner"></span></button><button class="secondary" id="close-event-modal">Cancel</button></div></div>
+
+<!-- Client Modal -->
 <div class="modal" id="client-modal"><div class="modal-content"><h2 id="client-modal-title">Add Client</h2><input type="hidden" id="edit-client-id"><div class="form-group"><label>Client Name</label><input type="text" id="client-name"></div><div class="form-group"><label>Work Start Time</label><input type="time" id="client-start"></div><div class="form-group"><label>Work End Time</label><input type="time" id="client-end"></div><div class="form-group"><label>Location / Timezone</label><input type="text" id="client-location" placeholder="e.g., Asia/Manila, Europe/London" list="timezone-list"><datalist id="timezone-list"><option value="Asia/Manila">Philippines</option><option value="America/Los_Angeles">San Francisco</option><option value="America/New_York">New York</option><option value="America/Chicago">Chicago</option><option value="America/Denver">Denver</option><option value="Europe/London">UK - London</option><option value="Europe/Paris">France - Paris</option><option value="Asia/Tokyo">Japan - Tokyo</option><option value="Asia/Dubai">UAE - Dubai</option><option value="Australia/Sydney">Australia - Sydney</option></datalist><small style="color:var(--text-secondary);">Enter a valid IANA timezone (e.g., Europe/Berlin)</small></div><div class="form-group"><label>Color Palette</label><div id="color-list" class="dynamic-list"></div><div class="hex-input-group"><input type="color" id="new-color-picker" value="#3b82f6"><input type="text" id="new-color-hex" placeholder="#3b82f6" maxlength="7" value="#3b82f6"><button id="add-color-btn" class="secondary">Add Color</button></div></div><div class="form-group"><label>Fonts</label><div id="font-list" class="dynamic-list"></div><div style="display:flex; gap:8px; margin-top:5px;"><input type="text" id="new-font" placeholder="Font name (e.g., Open Sans)"><button id="add-font-btn" class="secondary">Add Font</button></div></div><button id="save-client"><span class="button-text">Save</span><span class="button-spinner"></span></button><button class="secondary" id="close-client-modal">Cancel</button></div></div>
+
+<!-- Prompt Modal -->
 <div class="modal" id="prompt-modal"><div class="modal-content"><h2 id="prompt-modal-title">Add Prompt</h2><input type="hidden" id="prompt-client-id-hidden"><input type="hidden" id="edit-prompt-id"><div class="form-group" id="prompt-type-group"><label>Type</label><select id="prompt-type"><option value="text">Text only</option><option value="image">Image generator</option></select></div><div id="text-fields"><div class="form-group"><label>Title</label><input type="text" id="prompt-title"></div><div class="form-group"><label>Link</label><input type="url" id="prompt-link"></div></div><div id="image-fields" style="display:none;"><div class="form-group"><label>Size</label><input type="text" id="prompt-size" placeholder="e.g., 1:1, 4:5"></div><div class="form-group"><label>Topic</label><textarea id="prompt-topic" rows="3"></textarea></div><div class="form-group"><label>Caption</label><textarea id="prompt-caption" rows="3"></textarea></div></div><button id="save-prompt-btn"><span class="button-text">Save</span><span class="button-spinner"></span></button><button class="secondary" id="close-prompt-modal">Cancel</button></div></div>
+
+<!-- Generated Prompt Modal -->
 <div class="modal" id="generate-modal"><div class="modal-content"><h2>Generated Prompt</h2><textarea class="prompt-output" id="generated-prompt" readonly></textarea><button id="copy-prompt">Copy to Clipboard</button><button class="secondary" id="close-generate-modal">Close</button></div></div>
+
+<!-- Settings Modal -->
 <div class="modal" id="settings-modal"><div class="modal-content" style="max-width:600px;"><h2>Settings</h2><div class="settings-tabs"><button class="settings-tab-btn active" data-setting="design">Design</button><button class="settings-tab-btn" data-setting="employees">Employees</button><button class="settings-tab-btn" data-setting="api">API</button></div><div id="design-panel"><div class="form-group"><label>Select Design</label><select id="design-select"><option value="glass">Glass</option><option value="neon">Neon Pop</option><option value="pastel">Soft Pastel</option><option value="darkpro">Dark Pro</option><option value="nature">Nature Calm</option><option value="minimal">Minimal Clean</option></select></div></div><div id="employees-panel" style="display:none;"><div id="employees-list"></div><button id="add-employee-btn" class="secondary" style="margin-top:12px;">+ Add Employee</button></div><div id="api-panel" style="display:none;"><div class="form-group"><label>Web App URL</label><input type="text" id="api-url" placeholder="https://script.google.com/macros/s/..."></div><button id="save-api-url" class="secondary">Save URL</button></div><button class="secondary" id="close-settings" style="margin-top:20px;">Close</button></div></div>
+
+<!-- Employee Modal -->
 <div class="modal" id="employee-modal"><div class="modal-content"><h2 id="employee-modal-title">Add Employee</h2><input type="hidden" id="edit-employee-id"><div class="form-group"><label>Name</label><input type="text" id="employee-name"></div><div class="form-group"><label>Color</label><div class="hex-input-group"><input type="color" id="employee-color-picker" value="#3b82f6"><input type="text" id="employee-color-hex" placeholder="#3b82f6" maxlength="7" value="#3b82f6"></div></div><button id="save-employee"><span class="button-text">Save</span><span class="button-spinner"></span></button><button class="secondary" id="close-employee-modal">Cancel</button></div></div>
+
+<!-- Confirm Modal -->
 <div class="modal" id="confirm-modal"><div class="modal-content" style="max-width:400px; text-align:center;"><p id="confirm-message"></p><div style="display:flex; gap:12px; justify-content:center;"><button id="confirm-yes">Yes, delete</button><button class="secondary" id="confirm-no">Cancel</button></div></div></div>
+
+<!-- Note Modal (NEW) -->
+<div class="modal" id="note-modal">
+  <div class="modal-content">
+    <h2 id="note-modal-title">Add Note</h2>
+    <input type="hidden" id="edit-note-id">
+    <div class="form-group">
+      <label>Content</label>
+      <textarea id="note-content" rows="4"></textarea>
+    </div>
+    <div class="form-group">
+      <label>Color</label>
+      <select id="note-color">
+        <option value="#fef3c7">Yellow</option>
+        <option value="#ffe0e0">Pink</option>
+        <option value="#d1fae5">Green</option>
+        <option value="#e0e7ff">Blue</option>
+        <option value="#f5d0fe">Purple</option>
+      </select>
+    </div>
+    <button id="save-note"><span class="button-text">Add</span><span class="button-spinner"></span></button>
+    <button class="secondary" id="close-note-modal">Cancel</button>
+  </div>
+</div>
 
 <script>
   (function() {
-    const DEFAULT_API_URL = 'https://script.google.com/macros/s/AKfycbza7L0dZEMvh4LOiyAXEYu6oKf6Aa64VC32_-iBDh0Z1hORTJs9w_CfFzZRoPpY1adG/exec';
+    const DEFAULT_API_URL = 'https://script.google.com/macros/s/AKfycbwhmuB4WbpV9pgCILXU4KkdV4GW-IDFslLjGmm1hzFcZXjx158yLNjlxUqLiU8goI6m/exec';
     let data = { clients:[], tasks:[], prompts:[], employees:[], notes:[], chatMessages:[], design:'glass', webAppUrl:'', lastModified:0, lastModifier:'' };
     let currentFilter = { clientId:'all', employeeId:'all' };
     let calDate = new Date();
@@ -1133,7 +1185,7 @@
       });
     }
 
-    // ---------- ADD / EDIT TASK, PRIO, EVENT (with button) ----------
+    // ---------- ADD / EDIT TASK, PRIO, EVENT ----------
     document.getElementById('add-task-btn').addEventListener('click',()=>{ populateClientSelect(document.getElementById('task-client')); populateEmployeeSelect(document.getElementById('task-employee')); document.getElementById('task-text').value=''; document.getElementById('task-modal').classList.add('active'); });
     document.getElementById('add-prio-btn').addEventListener('click',()=>{ document.getElementById('prio-edit-id').value=''; document.getElementById('prio-modal-title').textContent='Add Priority Task'; document.getElementById('save-prio').querySelector('.button-text').textContent='Add'; populateClientSelect(document.getElementById('prio-client')); populateEmployeeSelect(document.getElementById('prio-employee')); document.getElementById('prio-text').value=''; document.getElementById('prio-urgency').value='normal'; document.getElementById('prio-date').value=''; document.getElementById('prio-modal').classList.add('active'); });
     document.getElementById('add-event-btn').addEventListener('click',()=>{ document.getElementById('event-edit-id').value=''; document.getElementById('event-modal-title').textContent='Add Event'; document.getElementById('save-event').querySelector('.button-text').textContent='Add'; populateClientSelect(document.getElementById('event-client')); populateEmployeeSelect(document.getElementById('event-employee')); document.getElementById('event-text').value=''; document.getElementById('event-date').value=''; document.getElementById('event-time').value=''; document.getElementById('event-type').value='meeting'; document.getElementById('event-custom-type').value=''; document.getElementById('event-custom-type-group').style.display='none'; document.getElementById('event-modal').classList.add('active'); });
@@ -1531,18 +1583,24 @@
       if (setting === 'employees') renderSettingsEmployees();
     }));
 
-    // ---------- NOTES ----------
+    // ---------- NOTES (with modal & edit) ----------
     function renderNotes() {
       const grid = document.getElementById('notes-grid');
-      if (!data.notes.length) { grid.innerHTML = '<p>No sticky notes yet.</p>'; return; }
+      if (!data.notes.length) {
+        grid.innerHTML = '<p>No sticky notes yet.</p>';
+        return;
+      }
       grid.innerHTML = data.notes.map(note => `
         <div class="sticky-note" style="background:${note.color}">
+          <div class="edit-note" data-id="${note.id}">✎</div>
           <div class="delete-note" data-id="${note.id}">✕</div>
           <p>${note.content}</p>
           <small style="position:absolute; bottom:8px; left:16px; color:var(--text-secondary);">${note.author}</small>
         </div>
       `).join('');
+
       document.querySelectorAll('.delete-note').forEach(b => b.addEventListener('click', async (e) => {
+        e.stopPropagation();
         const id = b.dataset.id;
         showConfirm('Delete this note?', async () => {
           await saveItem('note', { id }, 'delete');
@@ -1550,17 +1608,50 @@
           renderNotes();
         });
       }));
+
+      document.querySelectorAll('.edit-note').forEach(b => b.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const id = b.dataset.id;
+        const note = data.notes.find(n => n.id == id);
+        if (note) openNoteModal(note);
+      }));
     }
 
-    document.getElementById('add-note-btn').addEventListener('click', () => {
-      const content = prompt('Enter your note:');
-      if (!content) return;
-      const color = ['#fef3c7','#ffe0e0','#d1fae5','#e0e7ff','#f5d0fe'][Math.floor(Math.random()*5)];
-      const note = { id: Date.now().toString(), content, color, author: 'You' };
-      saveItem('note', note, 'add').then(() => {
-        data.notes.push(note);
-        renderNotes();
-      });
+    document.getElementById('add-note-btn').addEventListener('click', () => openNoteModal(null));
+
+    function openNoteModal(note = null) {
+      document.getElementById('edit-note-id').value = note ? note.id : '';
+      document.getElementById('note-modal-title').textContent = note ? 'Edit Note' : 'Add Note';
+      document.getElementById('note-content').value = note ? note.content : '';
+      document.getElementById('note-color').value = note ? note.color : '#fef3c7';
+      document.getElementById('save-note').querySelector('.button-text').textContent = note ? 'Update' : 'Add';
+      document.getElementById('note-modal').classList.add('active');
+    }
+
+    document.getElementById('close-note-modal').addEventListener('click', () => {
+      document.getElementById('note-modal').classList.remove('active');
+    });
+
+    document.getElementById('save-note').addEventListener('click', async () => {
+      const btn = document.getElementById('save-note');
+      const editId = document.getElementById('edit-note-id').value;
+      const content = document.getElementById('note-content').value.trim();
+      const color = document.getElementById('note-color').value;
+      if (!content) return alert('Please enter content.');
+
+      const note = {
+        id: editId || Date.now().toString(),
+        content: content,
+        color: color,
+        author: 'You'
+      };
+
+      const op = editId ? 'update' : 'add';
+      await saveItem('note', note, op, btn);
+      if (op === 'add') data.notes.push(note);
+      else data.notes = data.notes.map(n => n.id === note.id ? note : n);
+      document.getElementById('note-modal').classList.remove('active');
+      renderNotes();
     });
 
     // ---------- CHAT ----------
@@ -1609,19 +1700,31 @@
       chatInput.value = '';
     });
 
-    // Poll for new messages every 3 seconds
-    setInterval(async () => {
-      if (!chatPanel.classList.contains('open')) {
-        const res = await fetch(`${getApiUrl()}?action=getMessages&since=${chatLastTs}`);
-        const data = await res.json();
-        if (data.messages.length) {
-          unreadCount += data.messages.length;
-          chatBadge.textContent = unreadCount > 9 ? '9+' : unreadCount;
-          chatBadge.style.display = 'flex';
-          chatLastTs = data.latest;
+    // Start chat polling and initial load
+    async function startChatPolling() {
+      try {
+        const res = await fetch(`${getApiUrl()}?action=getMessages&since=0`);
+        const initialData = await res.json();
+        if (initialData.messages.length) {
+          initialData.messages.forEach(msg => appendChatMessage(msg));
+          chatLastTs = initialData.latest;
         }
-      }
-    }, 3000);
+      } catch(e) {}
+      setInterval(async () => {
+        if (!chatPanel.classList.contains('open')) {
+          try {
+            const res = await fetch(`${getApiUrl()}?action=getMessages&since=${chatLastTs}`);
+            const newData = await res.json();
+            if (newData.messages.length) {
+              unreadCount += newData.messages.length;
+              chatBadge.textContent = unreadCount > 9 ? '9+' : unreadCount;
+              chatBadge.style.display = 'flex';
+              chatLastTs = newData.latest;
+            }
+          } catch(e) {}
+        }
+      }, 3000);
+    }
 
     // ---------- INIT ----------
     (async function init() {
@@ -1637,6 +1740,7 @@
       renderDashboard();
       populateAllEmployeeSelects();
       startPolling();
+      startChatPolling();
       updatePHClock();
     })();
   })();
