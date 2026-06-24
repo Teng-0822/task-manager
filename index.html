@@ -181,7 +181,7 @@
     }
 
     /* ============================
-       SIDEBAR LAYOUT
+       SIDEBAR LAYOUT (WIDTH COLLAPSE)
        ============================ */
     .app {
       display: flex;
@@ -193,19 +193,24 @@
       transition: background 0.4s;
     }
     .sidebar {
-      width: 230px; flex-shrink:0;
+      width: 230px;
+      flex-shrink: 0;
       background: var(--glass-bg);
       backdrop-filter: var(--blur);
       -webkit-backdrop-filter: var(--blur);
       border-right: 1px solid var(--glass-border);
       display:flex; flex-direction:column; padding: 24px 12px;
-      transition: transform 0.4s ease, background 0.4s;
+      transition: width 0.4s ease, padding 0.4s, border 0.4s;
       overflow-y:auto;
+      overflow-x:hidden;
+      white-space: nowrap;
       z-index: 10;
-      transform: translateX(0);
     }
     .sidebar.auto-hidden {
-      transform: translateX(-100%);
+      width: 0 !important;
+      padding: 0;
+      border: none;
+      overflow: hidden;
     }
     .sidebar-toggle-btn {
       position: fixed;
@@ -720,6 +725,45 @@
       display: block;
     }
 
+    /* ============ LAYOUT ADJUSTMENTS WHEN SIDEBAR HIDDEN ============ */
+    body.sidebar-hidden .left-panel {
+      flex: 1 1 400px;
+      max-width: 800px;
+      width: auto;
+    }
+    body.sidebar-hidden .right-panel {
+      flex: 2 1 500px;
+    }
+    body.sidebar-hidden #today-tasks,
+    body.sidebar-hidden #priority-today,
+    body.sidebar-hidden #upcoming-events {
+      max-height: 400px;
+    }
+
+    /* Floating refresh notification */
+    #update-notification {
+      position: fixed;
+      bottom: 90px;
+      right: 20px;
+      width: auto;
+      max-width: 350px;
+      background: rgba(254,243,199,0.95);
+      backdrop-filter: blur(10px);
+      color: #92400e;
+      padding: 12px 20px;
+      border-radius: 16px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+      z-index: 398;
+      display: none;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      border: 1px solid rgba(255,255,255,0.5);
+    }
+    #update-notification button {
+      white-space: nowrap;
+    }
+
     /* Scrollbar */
     ::-webkit-scrollbar { width:6px; }
     ::-webkit-scrollbar-track { background: transparent; }
@@ -917,7 +961,7 @@
 
 <script>
   (function() {
-    const DEFAULT_API_URL = 'https://script.google.com/macros/s/AKfycbz1JK3lgLAVcu7QYukbM-abudOD8uaF5_wwBg9zZe0k5Xa0XUSxhcD7V8wWKAUs-rJa/exec';
+    const DEFAULT_API_URL = 'https://script.google.com/macros/s/AKfycby0AtTSgkRhCGg1MnvVY43D7MuKs83N-2To8lKlmMWbNtORMwxnqYnBtddxwDuJkspF/exec';
     let data = { clients:[], tasks:[], prompts:[], employees:[], notes:[], chatMessages:[], design:'glass', webAppUrl:'', lastModified:0, lastModifier:'' };
     let currentFilter = { clientId:'all', employeeId:'all' };
     let calDate = new Date();
@@ -1087,26 +1131,22 @@
     // ---------- RESET TASKS BASED ON CLIENT WORK START TIME ----------
     async function resetTasks() {
       for (const client of data.clients) {
-        if (!client.location) continue; // need timezone
+        if (!client.location) continue;
         const tz = client.location;
-        const workStart = client.workStart || '09:00'; // fallback
+        const workStart = client.workStart || '09:00';
         try {
-          // Get current date/time in client's timezone
           const nowInTz = new Date().toLocaleString('en-US', { timeZone: tz });
           const nowDate = new Date(nowInTz);
-          const todayStr = getDateInTz(nowDate); // YYYY-MM-DD
+          const todayStr = getDateInTz(nowDate);
           const mondayStr = getMondayInTz(nowDate, tz);
           const monthFirstStr = getFirstOfMonthInTz(nowDate, tz);
 
-          // Current time in minutes since midnight in that timezone
           const [wh, wm] = workStart.split(':').map(Number);
           const workStartMins = wh * 60 + wm;
           const currentMins = nowDate.getHours() * 60 + nowDate.getMinutes();
 
-          // Only proceed if current time is >= work start time
           if (currentMins < workStartMins) continue;
 
-          // Daily tasks for this client
           const clientTasks = data.tasks.filter(t => t.clientId === client.id);
           for (const task of clientTasks) {
             if (task.type === 'daily' && task.lastReset !== todayStr) {
@@ -1123,7 +1163,7 @@
               await saveItem('task', task, 'update');
             }
           }
-        } catch(e) { /* ignore invalid timezone */ }
+        } catch(e) {}
       }
     }
 
@@ -1149,9 +1189,6 @@
     }
 
     function getTaskDueToday(task) {
-      // Now tasks are considered due today if they are uncompleted and for today
-      // This function is used for the "Today's Tasks" panel and other places.
-      // We need to match the reset logic: a task is due today if its lastReset equals today's date (in its client's timezone)
       const client = data.clients.find(c => c.id === task.clientId);
       if (!client || !client.location) return false;
       try {
@@ -1168,27 +1205,26 @@
 
     function urgencyColor(u) { switch(u) { case 'important': return '#facc15'; case 'critical': return '#f97316'; case 'urgent': return '#ef4444'; default: return '#94a3b8'; } }
 
-    // ---------- SIDEBAR AUTO-HIDE ----------
+    // ---------- SIDEBAR AUTO‑HIDE (WIDTH COLLAPSE) ----------
     function setupSidebarAutoHide() {
       const sidebar = document.getElementById('sidebar');
       const toggleBtn = document.getElementById('sidebar-toggle-btn');
-      const app = document.querySelector('.app');
+      const body = document.body;
 
-      // Show sidebar, hide toggle button
       function showSidebar() {
         sidebar.classList.remove('auto-hidden');
         toggleBtn.classList.remove('visible');
+        body.classList.remove('sidebar-hidden');
         if (sidebarTimeout) clearTimeout(sidebarTimeout);
-        // restart timer to hide again after 5 seconds
         sidebarTimeout = setTimeout(hideSidebar, 5000);
       }
 
       function hideSidebar() {
         sidebar.classList.add('auto-hidden');
         toggleBtn.classList.add('visible');
+        body.classList.add('sidebar-hidden');
       }
 
-      // Toggle button click
       toggleBtn.addEventListener('click', (e) => {
         e.stopPropagation();
         if (sidebar.classList.contains('auto-hidden')) {
@@ -1198,9 +1234,6 @@
         }
       });
 
-      // Hover detection on left edge (20px) to reveal sidebar temporarily? We'll just use the button.
-      // Also allow clicking the main content to hide sidebar? Not necessary.
-      // On page load, start the timer after a short delay (so initial render completes)
       sidebarTimeout = setTimeout(hideSidebar, 5000);
     }
 
@@ -1459,7 +1492,6 @@
           </div>`;
       }).join('');
 
-      // Re-attach event listeners for checkboxes and delete buttons
       cont.querySelectorAll('input[type=checkbox]').forEach(cb => {
         cb.addEventListener('change', async function () {
           const task = data.tasks.find(t => t.id == this.dataset.taskId);
@@ -1627,7 +1659,7 @@
     document.getElementById('add-client-btn').addEventListener('click',()=>openClientModal());
     document.getElementById('close-client-modal').addEventListener('click',()=>document.getElementById('client-modal').classList.remove('active'));
 
-    // ---------- AI PROMPTS (fixed – removed inline onclick) ----------
+    // ---------- AI PROMPTS ----------
     function renderPromptTab() {
       const cont = document.getElementById('prompts-clients-grid');
       if (!data.clients.length) { cont.innerHTML = '<p>No clients yet.</p>'; return; }
@@ -1880,7 +1912,7 @@
       if (setting === 'employees') renderSettingsEmployees();
     }));
 
-    // ---------- NOTES (with modal & edit) ----------
+    // ---------- NOTES ----------
     function renderNotes() {
       const grid = document.getElementById('notes-grid');
       if (!data.notes.length) {
@@ -2021,7 +2053,6 @@
       chatInput.value = '';
     });
 
-    // Single polling loop for chat – works whether panel is open or closed
     async function startChatPolling() {
       try {
         const res = await fetch(`${getApiUrl()}?action=getMessages&since=0`);
@@ -2042,7 +2073,6 @@
               unreadCount += newData.messages.length;
               chatBadge.textContent = unreadCount > 9 ? '9+' : unreadCount;
               chatBadge.style.display = 'flex';
-              // Play notification sound
               if (chatSound) {
                 chatSound.currentTime = 0;
                 chatSound.play().catch(() => {});
@@ -2059,10 +2089,9 @@
       await loadAllData();
       applyDesign(data.design);
       const today = getTodayDateStr();
-      // Initialize lastReset for new tasks without one
       data.tasks.forEach(task => {
         if ((task.type === 'daily' || task.type === 'weekly' || task.type === 'monthly') && !task.lastReset) {
-          task.lastReset = today; // temporary, will be corrected by resetTasks
+          task.lastReset = today;
         }
       });
       await resetTasks();
