@@ -8,7 +8,7 @@
   <!-- Google Fonts for all designs -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@400;700&family=Inter:wght@400;500;600;700&family=Nunito:wght@400;600;700&family=Orbitron:wght@400;500;700&family=Quicksand:wght@400;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@400;700&family=Inter:wght@400;500;600;700&family=Nunito:wght@400;600;700&family=Orbitron:wght@400;500;700&family=Press+Start+2P&family=Quicksand:wght@400;600;700&display=swap" rel="stylesheet">
   
   <style>
     /* ============================
@@ -146,6 +146,40 @@
       --task-radius: 4px;
       --font: 'Inter', system-ui, sans-serif;
     }
+    /* NEW: Retro Design */
+    body.design-retro {
+      --primary: #ff6b6b;
+      --primary-hover: #ee5a5a;
+      --bg: linear-gradient(135deg, #ffe0b2 0%, #ffcc80 100%);
+      --glass-bg: rgba(255,248,220,0.8);
+      --glass-border: #cd853f;
+      --shadow: 4px 4px 0 #8b4513, 8px 8px 0 rgba(0,0,0,0.1);
+      --text: #3e2723;
+      --text-secondary: #5d4037;
+      --radius: 0px;
+      --transition: 0.15s ease;
+      --card-bg: rgba(255,248,220,0.9);
+      --input-bg: #fff8dc;
+      --blur: none;
+      --modal-bg: #fff8dc;
+      --button-radius: 0px;
+      --task-radius: 0px;
+      --font: 'Press Start 2P', cursive;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      image-rendering: pixelated;
+    }
+    body.design-retro button,
+    body.design-retro select,
+    body.design-retro input,
+    body.design-retro textarea {
+      border: 3px solid #8b4513;
+      box-shadow: 3px 3px 0 #8b4513;
+    }
+    body.design-retro .modal-content {
+      border: 4px solid #8b4513;
+      box-shadow: 8px 8px 0 #8b4513;
+    }
 
     /* ============================
        SIDEBAR LAYOUT
@@ -247,11 +281,14 @@
       justify-content: space-between;
       border-bottom: 1px solid rgba(255,255,255,0.5);
     }
+
+    /* Loading overlay (shown on startup) */
     #loading-overlay {
       position:fixed; top:0; left:0; width:100%; height:100%;
-      background: rgba(255,255,255,0.3);
+      background: rgba(255,255,255,0.8);
       backdrop-filter: blur(10px);
-      z-index:300; display:none;
+      z-index:300;
+      display:flex;            /* shown by default */
       justify-content:center; align-items:center;
     }
     .loading-box {
@@ -616,7 +653,7 @@
       border-radius:50%; width:40px; height:40px; padding:0;
     }
 
-    /* ============ NEW: COLLAPSIBLE CLIENT CARDS ============ */
+    /* ============ COLLAPSIBLE CLIENT CARDS ============ */
     .client-card-header {
       display: flex;
       justify-content: space-between;
@@ -680,12 +717,15 @@
       <p style="color:var(--text); font-weight:500;">Saving...</p>
     </div>
   </div>
+  
+  <!-- Loading overlay (shown on startup) -->
   <div id="loading-overlay">
     <div class="loading-box">
       <div class="spinner"></div>
-      <p style="color:var(--text); font-weight:500;">Syncing latest data...</p>
+      <p style="color:var(--text); font-weight:500;">Loading your workspace...</p>
     </div>
   </div>
+  
   <div id="update-notification">
     <span>🔄 Your co-worker updated the list.</span>
     <button id="refresh-now-btn" style="background:#f59e0b; color:white; border:none; border-radius:30px; padding:8px 18px; cursor:pointer; font-weight:500;">↻ Refresh now</button>
@@ -815,7 +855,7 @@
 <div class="modal" id="generate-modal"><div class="modal-content"><h2>Generated Prompt</h2><textarea class="prompt-output" id="generated-prompt" readonly></textarea><button id="copy-prompt">Copy to Clipboard</button><button class="secondary" id="close-generate-modal">Close</button></div></div>
 
 <!-- Settings Modal -->
-<div class="modal" id="settings-modal"><div class="modal-content" style="max-width:600px;"><h2>Settings</h2><div class="settings-tabs"><button class="settings-tab-btn active" data-setting="design">Design</button><button class="settings-tab-btn" data-setting="employees">Employees</button><button class="settings-tab-btn" data-setting="api">API</button></div><div id="design-panel"><div class="form-group"><label>Select Design</label><select id="design-select"><option value="glass">Glass</option><option value="neon">Neon Pop</option><option value="pastel">Soft Pastel</option><option value="darkpro">Dark Pro</option><option value="nature">Nature Calm</option><option value="minimal">Minimal Clean</option></select></div></div><div id="employees-panel" style="display:none;"><div id="employees-list"></div><button id="add-employee-btn" class="secondary" style="margin-top:12px;">+ Add Employee</button></div><div id="api-panel" style="display:none;"><div class="form-group"><label>Web App URL</label><input type="text" id="api-url" placeholder="https://script.google.com/macros/s/..."></div><button id="save-api-url" class="secondary">Save URL</button></div><button class="secondary" id="close-settings" style="margin-top:20px;">Close</button></div></div>
+<div class="modal" id="settings-modal"><div class="modal-content" style="max-width:600px;"><h2>Settings</h2><div class="settings-tabs"><button class="settings-tab-btn active" data-setting="design">Design</button><button class="settings-tab-btn" data-setting="employees">Employees</button><button class="settings-tab-btn" data-setting="api">API</button></div><div id="design-panel"><div class="form-group"><label>Select Design</label><select id="design-select"><option value="glass">Glass</option><option value="neon">Neon Pop</option><option value="pastel">Soft Pastel</option><option value="darkpro">Dark Pro</option><option value="nature">Nature Calm</option><option value="minimal">Minimal Clean</option><option value="retro">Retro</option></select></div></div><div id="employees-panel" style="display:none;"><div id="employees-list"></div><button id="add-employee-btn" class="secondary" style="margin-top:12px;">+ Add Employee</button></div><div id="api-panel" style="display:none;"><div class="form-group"><label>Web App URL</label><input type="text" id="api-url" placeholder="https://script.google.com/macros/s/..."></div><button id="save-api-url" class="secondary">Save URL</button></div><button class="secondary" id="close-settings" style="margin-top:20px;">Close</button></div></div>
 
 <!-- Employee Modal -->
 <div class="modal" id="employee-modal"><div class="modal-content"><h2 id="employee-modal-title">Add Employee</h2><input type="hidden" id="edit-employee-id"><div class="form-group"><label>Name</label><input type="text" id="employee-name"></div><div class="form-group"><label>Color</label><div class="hex-input-group"><input type="color" id="employee-color-picker" value="#3b82f6"><input type="text" id="employee-color-hex" placeholder="#3b82f6" maxlength="7" value="#3b82f6"></div></div><button id="save-employee"><span class="button-text">Save</span><span class="button-spinner"></span></button><button class="secondary" id="close-employee-modal">Cancel</button></div></div>
@@ -846,7 +886,7 @@
 
 <script>
   (function() {
-    const DEFAULT_API_URL = 'https://script.google.com/macros/s/AKfycbz1JK3lgLAVcu7QYukbM-abudOD8uaF5_wwBg9zZe0k5Xa0XUSxhcD7V8wWKAUs-rJa/exec';
+    const DEFAULT_API_URL = 'https://script.google.com/macros/s/AKfycby0AtTSgkRhCGg1MnvVY43D7MuKs83N-2To8lKlmMWbNtORMwxnqYnBtddxwDuJkspF/exec';
     let data = { clients:[], tasks:[], prompts:[], employees:[], notes:[], chatMessages:[], design:'glass', webAppUrl:'', lastModified:0, lastModifier:'' };
     let currentFilter = { clientId:'all', employeeId:'all' };
     let calDate = new Date();
@@ -981,7 +1021,7 @@
     }
 
     function applyDesign(design) {
-      document.body.classList.remove('design-glass','design-neon','design-pastel','design-darkpro','design-nature','design-minimal');
+      document.body.classList.remove('design-glass','design-neon','design-pastel','design-darkpro','design-nature','design-minimal','design-retro');
       document.body.classList.add('design-' + design);
       const sel = document.getElementById('design-select');
       if(sel) sel.value = design;
@@ -1891,6 +1931,8 @@
       startPolling();
       startChatPolling();
       updatePHClock();
+      // Hide the startup loading overlay
+      hideLoadingOverlay();
     })();
   })();
 </script>
