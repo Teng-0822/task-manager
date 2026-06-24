@@ -341,6 +341,7 @@
     .employee-dot { display:inline-block; width:10px; height:10px; border-radius:50%; margin-right:4px; }
 
     #today-tasks, #priority-today, #upcoming-events { max-height:250px; overflow-y:auto; }
+
     .client-tasks-grid { display:flex; flex-direction:column; gap:20px; }
     .client-card {
       border-left:5px solid var(--primary);
@@ -615,6 +616,48 @@
       border-radius:50%; width:40px; height:40px; padding:0;
     }
 
+    /* ============ NEW: COLLAPSIBLE CLIENT CARDS ============ */
+    .client-card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      cursor: pointer;
+      user-select: none;
+    }
+    .client-card-header h3 {
+      margin: 0;
+      font-size: 18px;
+    }
+    .client-summary {
+      font-size: 13px;
+      color: var(--text-secondary);
+      font-weight: 500;
+      margin-left: 16px;
+    }
+    .client-card-body {
+      margin-top: 16px;
+      display: none; /* hidden by default */
+    }
+    .client-card.open .client-card-body {
+      display: block;
+    }
+
+    /* Collapsible type groups */
+    .type-group-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      cursor: pointer;
+      font-weight: 600;
+      text-transform: capitalize;
+    }
+    .type-group-body {
+      display: none;
+    }
+    .type-group.open .type-group-body {
+      display: block;
+    }
+
     /* Scrollbar */
     ::-webkit-scrollbar { width:6px; }
     ::-webkit-scrollbar-track { background: transparent; }
@@ -749,7 +792,7 @@
     <button id="send-chat">➤</button>
   </div>
 </div>
-<!-- ================== MODALS ================== --><!-- ================== MODALS ================== -->
+<!-- ================== MODALS ================== -->
 <!-- Task Modal -->
 <div class="modal" id="task-modal"><div class="modal-content"><h2>Add Task</h2><div class="form-group"><label>Client</label><select id="task-client"></select></div><div class="form-group"><label>Type</label><select id="task-type"><option value="daily">Daily</option><option value="weekly">Weekly</option><option value="monthly">Monthly</option></select></div><div class="form-group"><label>Task Description</label><input type="text" id="task-text" placeholder="e.g., Check emails"></div><div class="form-group"><label>Assign Employee (optional)</label><select id="task-employee"><option value="">-- None --</option></select></div><button id="save-task"><span class="button-text">Add</span><span class="button-spinner"></span></button><button class="secondary" id="close-task-modal">Cancel</button></div></div>
 
@@ -803,7 +846,7 @@
 
 <script>
   (function() {
-    const DEFAULT_API_URL = 'https://script.google.com/macros/s/AKfycby0AtTSgkRhCGg1MnvVY43D7MuKs83N-2To8lKlmMWbNtORMwxnqYnBtddxwDuJkspF/exec';
+    const DEFAULT_API_URL = 'https://script.google.com/macros/s/AKfycbz1JK3lgLAVcu7QYukbM-abudOD8uaF5_wwBg9zZe0k5Xa0XUSxhcD7V8wWKAUs-rJa/exec';
     let data = { clients:[], tasks:[], prompts:[], employees:[], notes:[], chatMessages:[], design:'glass', webAppUrl:'', lastModified:0, lastModifier:'' };
     let currentFilter = { clientId:'all', employeeId:'all' };
     let calDate = new Date();
@@ -1108,72 +1151,156 @@
     document.getElementById('filter-client').addEventListener('change',function(){ currentFilter.clientId=this.value; renderDashboard(); });
     document.getElementById('filter-employee').addEventListener('change',function(){ currentFilter.employeeId=this.value; renderDashboard(); });
 
+    // ---------- COLLAPSIBLE CLIENT TASK LISTS ----------
     function renderClientTaskLists() {
       const cont = document.getElementById('dashboard-clients');
       let clients = data.clients;
-      if(currentFilter.clientId!=='all') clients = clients.filter(c=>c.id===currentFilter.clientId);
-      if(!clients.length){ cont.innerHTML='<p>No clients match filter.</p>'; return; }
-      cont.innerHTML = clients.map(client=>{
-        const accent = client.colors?.[0]||'#3b82f6';
-        let tasks = data.tasks.filter(t=>t.clientId===client.id);
-        if(currentFilter.employeeId!=='all') tasks = tasks.filter(t=>t.employeeId===currentFilter.employeeId);
-        const dailies = tasks.filter(t=>t.type==='daily');
-        const weeklies = tasks.filter(t=>t.type==='weekly');
-        const monthlies = tasks.filter(t=>t.type==='monthly');
-        const prios = tasks.filter(t=>t.type==='priority');
-        const evs = tasks.filter(t=>t.type==='event');
-        const base = tasks.filter(t=>t.type!=='priority' && t.type!=='event');
-        const pct = base.length ? Math.round((base.filter(t=>t.completed).length / base.length)*100) : 0;
+      if (currentFilter.clientId !== 'all') clients = clients.filter(c => c.id === currentFilter.clientId);
+      if (!clients.length) {
+        cont.innerHTML = '<p>No clients match filter.</p>';
+        return;
+      }
 
-        return `<div class="client-card" style="border-left-color:${accent};">
-          <div style="display:flex;justify-content:space-between;align-items:center;"><h3>${client.name}</h3><div class="progress-ring" style="--percent:${pct}%;">${pct}%</div></div>
-          <div class="task-columns">
-            ${[ ['daily',dailies], ['weekly',weeklies], ['monthly',monthlies] ].map(([type,arr])=>`
-              <div class="task-type-group"><strong style="text-transform:capitalize;">${type}</strong>${arr.length? '': '<p style="color:var(--text-secondary);font-size:12px;margin-top:4px;">No tasks</p>'}
-                ${arr.map(t=>{
-                  const emp = getEmployeeById(t.employeeId);
-                  const disp = emp?`${t.text} - ${emp.name}`:t.text;
-                  return `<div class="lively-task-card" style="border-left:3px solid ${emp?emp.color:'transparent'};"><div style="display:flex;align-items:center;gap:8px; overflow:hidden;"><span style="flex:1; font-size:13px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; min-width:0; ${t.completed?'text-decoration:line-through;color:var(--text-secondary);':''}">${emp?`<span class="employee-dot" style="background:${emp.color};"></span>`:''}${disp}</span><div class="task-controls"><input type="checkbox" ${t.completed?'checked':''} data-task-id="${t.id}"><button class="secondary" style="padding:2px 6px; font-size:11px;" data-delete-task="${t.id}">✕</button></div></div></div>`;
+      cont.innerHTML = clients.map(client => {
+        const accent = client.colors?.[0] || '#3b82f6';
+        let tasks = data.tasks.filter(t => t.clientId === client.id);
+        if (currentFilter.employeeId !== 'all') tasks = tasks.filter(t => t.employeeId === currentFilter.employeeId);
+
+        const dailies = tasks.filter(t => t.type === 'daily');
+        const weeklies = tasks.filter(t => t.type === 'weekly');
+        const monthlies = tasks.filter(t => t.type === 'monthly');
+        const prios = tasks.filter(t => t.type === 'priority');
+        const evs = tasks.filter(t => t.type === 'event');
+
+        const dUnchecked = dailies.filter(t => !t.completed).length;
+        const wUnchecked = weeklies.filter(t => !t.completed).length;
+        const mUnchecked = monthlies.filter(t => !t.completed).length;
+        const pUnchecked = prios.filter(t => !t.completed).length;
+        const eCount = evs.length;
+
+        const summary = `D:${dUnchecked} W:${wUnchecked} M:${mUnchecked} P:${pUnchecked} E:${eCount}`;
+
+        const base = tasks.filter(t => t.type !== 'priority' && t.type !== 'event');
+        const pct = base.length ? Math.round((base.filter(t => t.completed).length / base.length) * 100) : 0;
+
+        return `
+          <div class="client-card" style="border-left-color:${accent};">
+            <div class="client-card-header" onclick="this.closest('.client-card').classList.toggle('open')">
+              <h3>${client.name}</h3>
+              <span class="client-summary">${summary}</span>
+            </div>
+            <div class="client-card-body">
+              <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+                <span class="progress-ring" style="--percent:${pct}%;">${pct}%</span>
+              </div>
+              <div class="task-columns">
+                ${[ 
+                  ['daily', dailies], 
+                  ['weekly', weeklies], 
+                  ['monthly', monthlies] 
+                ].map(([type, arr]) => {
+                  const unchecked = arr.filter(t => !t.completed).length;
+                  return `
+                    <div class="task-type-group type-group">
+                      <div class="type-group-header" onclick="this.closest('.type-group').classList.toggle('open')">
+                        <span>${type} (${unchecked})</span>
+                        <span style="font-size:12px;">▾</span>
+                      </div>
+                      <div class="type-group-body" style="margin-top:8px;">
+                        ${arr.length ? arr.map(t => {
+                          const emp = getEmployeeById(t.employeeId);
+                          const disp = emp ? `${t.text} - ${emp.name}` : t.text;
+                          return `<div class="lively-task-card" style="border-left:3px solid ${emp ? emp.color : 'transparent'};">
+                            <div style="display:flex; align-items:center; gap:8px; overflow:hidden;">
+                              <span style="flex:1; font-size:13px; ${t.completed ? 'text-decoration:line-through; color:var(--text-secondary);' : ''}">
+                                ${emp ? `<span class="employee-dot" style="background:${emp.color};"></span>` : ''}${disp}
+                              </span>
+                              <div class="task-controls">
+                                <input type="checkbox" ${t.completed ? 'checked' : ''} data-task-id="${t.id}">
+                                <button class="secondary" style="padding:2px 6px; font-size:11px;" data-delete-task="${t.id}">✕</button>
+                              </div>
+                            </div>
+                          </div>`;
+                        }).join('') : '<p style="color:var(--text-secondary); font-size:12px; margin-top:4px;">No tasks</p>'}
+                      </div>
+                    </div>`;
                 }).join('')}
-              </div>`).join('')}
-          </div>
-          <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-top:16px;">
-            <div class="task-type-group"><strong>⚡ Priority</strong>${prios.length? '': '<p style="color:var(--text-secondary);font-size:12px;margin-top:4px;">No priority tasks</p>'}
-              ${prios.map(t=>{
-                const emp = getEmployeeById(t.employeeId);
-                const disp = emp?`${t.text} - ${emp.name}`:t.text;
-                const col = urgencyColor(t.urgency);
-                return `<div class="lively-task-card" style="border-left:3px solid ${col};"><div style="display:flex;align-items:center;gap:8px; overflow:hidden;"><span style="flex:1; font-size:13px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; min-width:0;">${emp?`<span class="employee-dot" style="background:${emp.color};"></span>`:''}${disp} <span style="color:var(--text-secondary);">(${t.urgency||'normal'})</span> ${t.dueDate?`<small>Due: ${t.dueDate}</small>`:''}</span><div class="task-controls"><input type="checkbox" ${t.completed?'checked':''} data-task-id="${t.id}"><button class="secondary" style="padding:2px 6px; font-size:11px;" data-delete-task="${t.id}">✕</button></div></div></div>`;
-              }).join('')}
+              </div>
+              <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-top:16px;">
+                <div class="task-type-group type-group">
+                  <div class="type-group-header" onclick="this.closest('.type-group').classList.toggle('open')">
+                    <span>⚡ Priority (${prios.length})</span>
+                    <span style="font-size:12px;">▾</span>
+                  </div>
+                  <div class="type-group-body" style="margin-top:8px;">
+                    ${prios.length ? prios.map(t => {
+                      const emp = getEmployeeById(t.employeeId);
+                      const disp = emp ? `${t.text} - ${emp.name}` : t.text;
+                      const col = urgencyColor(t.urgency);
+                      return `<div class="lively-task-card" style="border-left:3px solid ${col};">
+                        <div style="display:flex; align-items:center; gap:8px;">
+                          <span style="flex:1; font-size:13px;">
+                            ${emp ? `<span class="employee-dot" style="background:${emp.color};"></span>` : ''}${disp}
+                            <span style="color:var(--text-secondary);">(${t.urgency || 'normal'})</span>
+                            ${t.dueDate ? `<small>Due: ${t.dueDate}</small>` : ''}
+                          </span>
+                          <div class="task-controls">
+                            <input type="checkbox" ${t.completed ? 'checked' : ''} data-task-id="${t.id}">
+                            <button class="secondary" style="padding:2px 6px; font-size:11px;" data-delete-task="${t.id}">✕</button>
+                          </div>
+                        </div>
+                      </div>`;
+                    }).join('') : '<p style="color:var(--text-secondary); font-size:12px; margin-top:4px;">No priority tasks</p>'}
+                  </div>
+                </div>
+                <div class="task-type-group type-group">
+                  <div class="type-group-header" onclick="this.closest('.type-group').classList.toggle('open')">
+                    <span>📅 Events (${evs.length})</span>
+                    <span style="font-size:12px;">▾</span>
+                  </div>
+                  <div class="type-group-body" style="margin-top:8px;">
+                    ${evs.length ? evs.map(t => {
+                      const emp = getEmployeeById(t.employeeId);
+                      const disp = emp ? `${t.text} - ${emp.name}` : t.text;
+                      const time = t.eventTime ? ` ${to12h(t.eventTime)}` : '';
+                      return `<div class="lively-task-card" style="border-left:3px solid ${emp ? emp.color : 'transparent'};">
+                        <div style="display:flex; align-items:center; gap:8px;">
+                          <span style="flex:1; font-size:13px;">
+                            ${emp ? `<span class="employee-dot" style="background:${emp.color};"></span>` : ''}${disp}
+                            <span style="color:var(--text-secondary);">(${t.eventType || 'event'})</span>
+                            ${t.eventDate ? `<small>${t.eventDate}${time}</small>` : ''}
+                          </span>
+                          <div class="task-controls">
+                            <input type="checkbox" ${t.completed ? 'checked' : ''} data-task-id="${t.id}">
+                            <button class="secondary" style="padding:2px 6px; font-size:11px;" data-delete-task="${t.id}">✕</button>
+                          </div>
+                        </div>
+                      </div>`;
+                    }).join('') : '<p style="color:var(--text-secondary); font-size:12px; margin-top:4px;">No events</p>'}
+                  </div>
+                </div>
+              </div>
             </div>
-            <div class="task-type-group"><strong>📅 Events</strong>${evs.length? '': '<p style="color:var(--text-secondary);font-size:12px;margin-top:4px;">No events</p>'}
-              ${evs.map(t=>{
-                const emp = getEmployeeById(t.employeeId);
-                const disp = emp?`${t.text} - ${emp.name}`:t.text;
-                const time = t.eventTime ? ` ${to12h(t.eventTime)}` : '';
-                return `<div class="lively-task-card" style="border-left:3px solid ${emp?emp.color:'transparent'};"><div style="display:flex;align-items:center;gap:8px; overflow:hidden;"><span style="flex:1; font-size:13px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; min-width:0;">${emp?`<span class="employee-dot" style="background:${emp.color};"></span>`:''}${disp} <span style="color:var(--text-secondary);">(${t.eventType||'event'})</span> ${t.eventDate?`<small>${t.eventDate}${time}</small>`:''}</span><div class="task-controls"><input type="checkbox" ${t.completed?'checked':''} data-task-id="${t.id}"><button class="secondary" style="padding:2px 6px; font-size:11px;" data-delete-task="${t.id}">✕</button></div></div></div>`;
-              }).join('')}
-            </div>
-          </div>
-        </div>`;
+          </div>`;
       }).join('');
 
-      cont.querySelectorAll('input[type=checkbox]').forEach(cb=>{
-        cb.addEventListener('change', async function(){
-          const task = data.tasks.find(t=>t.id==this.dataset.taskId);
-          if(task){
+      // Re-attach event listeners for checkboxes and delete buttons
+      cont.querySelectorAll('input[type=checkbox]').forEach(cb => {
+        cb.addEventListener('change', async function () {
+          const task = data.tasks.find(t => t.id == this.dataset.taskId);
+          if (task) {
             task.completed = this.checked;
             await saveItem('task', task, 'update');
             renderDashboard();
           }
         });
       });
-      cont.querySelectorAll('[data-delete-task]').forEach(btn=>{
-        btn.addEventListener('click', function(){
+      cont.querySelectorAll('[data-delete-task]').forEach(btn => {
+        btn.addEventListener('click', function () {
           const id = this.dataset.deleteTask;
-          showConfirm('Delete this task?', async ()=>{
+          showConfirm('Delete this task?', async () => {
             await saveItem('task', { id }, 'delete');
-            data.tasks = data.tasks.filter(t=>t.id!=id);
+            data.tasks = data.tasks.filter(t => t.id != id);
             renderDashboard();
           });
         });
